@@ -1,0 +1,2 @@
+# sniper
+Crypto Trading Bot
