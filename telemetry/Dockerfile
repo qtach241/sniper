@@ -11,6 +11,8 @@ FROM python:3.6-alpine
 WORKDIR /usr/src
 
 #RUN pip install cbpro
+#RUN pip install pandas
+#RUN pip install bta-lib
 
 ADD telemetry.py .
 

@@ -7,6 +7,10 @@ import threading
 import time
 import pprint
 
+import cbpro
+import pandas
+import btalib
+
 usage_text = "Usage: telemetry.py -e <exchange> -s <symbol>"
 
 symbol = ""
@@ -24,15 +28,26 @@ for opt, arg in opts:
 
 def thread_loop():
     while True:
-        print("hello from thread!")
+        #print("hello from thread!")
         time.sleep(1)
 
 thread = threading.Thread(target=thread_loop, args=())
 thread.daemon = True
 thread.start()
-		
+
+public_client = cbpro.PublicClient() # Create a public client
+print(public_client)
+
+historic_data_columns = ["Date", "Open", "High", "Low", "Close", "Unused"]
+
+historic_data = public_client.get_product_historic_rates("SOL-USD")
+dataframe = pandas.DataFrame(historic_data, columns=historic_data_columns)
+
+print(dataframe)
+
 while True:
-	print("hello from main loop!")
+	ticker = public_client.get_product_ticker(product_id="SOL-USD")
+	pprint.pprint(ticker)
 	time.sleep(5)
 
 thread.join()
