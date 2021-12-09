@@ -1,2 +1,11 @@
+# Python byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Documentation artifacts
 docs/build/
+
+# Project keys
 api_keys/
+auth_keys.py

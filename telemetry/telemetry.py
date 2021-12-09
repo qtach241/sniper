@@ -6,6 +6,7 @@ import socket
 import threading
 import time
 import pprint
+from auth_keys import (api_secret, api_key, api_pass)
 
 import cbpro
 import pandas
@@ -42,8 +43,15 @@ historic_data_columns = ["Date", "Open", "High", "Low", "Close", "Unused"]
 
 historic_data = public_client.get_product_historic_rates("SOL-USD")
 dataframe = pandas.DataFrame(historic_data, columns=historic_data_columns)
-
+dataframe["5-Day Moving Average"] = dataframe.Close.rolling(5).mean() # Moving Average via Pandas
+dataframe["10-Day Moving Average"] = btalib.sma(dataframe.Close, period=10).df # Moving Average via bta-lib
 print(dataframe)
+
+order_book = public_client.get_product_order_book("SOL-USD")
+print(order_book)
+
+stats = public_client.get_product_24hr_stats("SOL-USD")
+print(stats)
 
 while True:
 	ticker = public_client.get_product_ticker(product_id="SOL-USD")
