@@ -130,7 +130,7 @@ def get_product_ticker(product):
 def subscribe(product, channel, expiry):
     """Subscribe to a websocket feed using the websocket client.
 
-    The console program will remain subscribed and echo received messages to
+    The websocket client will remain subscribed and echo received messages to
     the terminal until the expiry time (default 10 seconds).
 
     \b
@@ -160,11 +160,8 @@ def subscribe(product, channel, expiry):
             print("\n-- Socket Closed --")
             print("Total messages received: ", self.message_count)
 
-    click.echo(f"product: {product}")
-    click.echo(f"channel: {channel}")
-
     websocket_client = MyWebsocketClient(url="wss://ws-feed.pro.coinbase.com",
-                                    products=product,
+                                    products=[f"{product}"],
                                     channels=[f"{channel}"])
     websocket_client.start()
     time.sleep(expiry)
