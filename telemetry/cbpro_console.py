@@ -179,6 +179,122 @@ def get_product_trades(product, before, after, limit):
 
 @cli.command()
 @click.option('--product', prompt='Enter Product Id', help='Product Id (ie. BTC-USD)')
+@click.option('--start', help='(Optional) Start time in ISO 8601')
+@click.option('--end', help='(Optional) End time in ISO 8601')
+@click.option('--granularity', default=3600, help='Desired time slice in seconds')
+def get_product_historic_rates(product, start, end, granularity):
+    """List historic rates (candles) for a product.
+
+    Rates are returned in grouped buckets based on requested
+    granularity. If start, end, and granularity aren't provided,
+    the exchange will assume some (currently unknown) default values.
+
+    Historical rate data may be incomplete. No data is published for
+    intervals where there are no ticks.
+
+    **Caution**: Historical rates should not be polled frequently.
+    If you need real-time information, use the trade and book
+    endpoints along with the websocket feed.
+
+    The maximum number of data points for a single request is 200
+    candles. If your selection of start/end time and granularity
+    will result in more than 200 data points, your request will be
+    rejected. If you wish to retrieve fine granularity data over a
+    larger time range, you will need to make multiple requests with
+    new start/end ranges.
+
+    \b
+    Returns:
+        list: Historic candle data. Example:
+            [
+                [ time, low, high, open, close, volume ],
+                [ 1415398768, 0.32, 4.2, 0.35, 4.2, 12.3 ],
+                ...
+            ]
+
+    \b
+    Coinbase API Documentation:
+    https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_getproductcandles
+    """
+
+    public_client = cbpro.PublicClient()
+    candles = public_client.get_product_historic_rates(product_id=product,
+                                            start=start,
+                                            end=end,
+                                            granularity=granularity)
+    print(json.dumps(candles, indent=4, sort_keys=True))
+
+@cli.command()
+@click.option('--product', prompt='Enter Product Id', help='Product Id (ie. BTC-USD)')
+def get_product_24hr_stats(product):
+    """Get 24 hr stats for the product.
+
+    \b
+    Returns:
+        dict: 24 hour stats. Volume is in base currency units.
+            Open, high, low are in quote currency units. Example::
+            {
+                "open": "34.19000000",
+                "high": "95.70000000",
+                "low": "7.06000000",
+                "volume": "2.41000000"
+            }
+
+    \b
+    Coinbase API Documentation:
+    https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_getproductstats
+    """
+
+    public_client = cbpro.PublicClient()
+    stats = public_client.get_product_24hr_stats(product)
+    print(json.dumps(stats, indent=4, sort_keys=True))
+
+@cli.command()
+def get_currencies():
+    """List known currencies.
+
+    \b
+    Returns:
+        list: List of currencies. Example::
+            [{
+                "id": "BTC",
+                "name": "Bitcoin",
+                "min_size": "0.00000001"
+            }, {
+                "id": "USD",
+                "name": "United States Dollar",
+                "min_size": "0.01000000"
+            }]
+
+    \b
+    Coinbase API Documentation:
+    https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_getcurrencies
+    """
+
+    public_client = cbpro.PublicClient()
+    currencies = public_client.get_currencies()
+    print(json.dumps(currencies, indent=4, sort_keys=True))
+
+@cli.command()
+def get_time():
+    """Get the API server time.
+
+    \b
+    Returns:
+        dict: Server time in ISO and epoch format (decimal seconds
+            since Unix epoch). Example::
+                {
+                    "iso": "2015-01-07T23:47:25.201Z",
+                    "epoch": 1420674445.201
+                }
+    """
+
+    public_client = cbpro.PublicClient()
+    api_time = public_client.get_time()
+    print(json.dumps(api_time, indent=4, sort_keys=True))
+
+@cli.command()
+@click.option('--product', prompt='Enter Product Id', help='Product Id (ie. BTC-USD)')
 @click.option('--channel', prompt='Enter Channel', help='Websocket channel to subscribe to')
 @click.option('--expiry', default=10, help='Time (in seconds) to remain subscribed')
 def subscribe(product, channel, expiry):
