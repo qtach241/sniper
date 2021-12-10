@@ -23,7 +23,7 @@ for opt, arg in opts:
     if opt == '-e':
         exchange = arg
     elif opt in ("-s"):
-        symbool = arg
+        symbol = arg
     elif opt in ("--help"):
         print(usage_text)
         sys.exit()
