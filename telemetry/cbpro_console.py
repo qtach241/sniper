@@ -5,7 +5,6 @@ import os
 import socket
 import threading
 import time
-import pprint
 import json
 from auth_keys import (api_secret, api_key, api_pass)
 
@@ -46,7 +45,7 @@ def get_products():
 
     public_client = cbpro.PublicClient()
     products = public_client.get_products()
-    pprint.pprint(products)
+    print(json.dumps(products, indent=4, sort_keys=True))
 
 @cli.command()
 @click.option('--product', prompt='Enter Product Id', help='Product Id (ie. BTC-USD)')
@@ -91,7 +90,7 @@ def get_product_order_book(product, level):
 
     public_client = cbpro.PublicClient()
     order_book = public_client.get_product_order_book(product, level=level)
-    pprint.pprint(order_book)
+    print(json.dumps(order_book, indent=4, sort_keys=True))
 
 @cli.command()
 @click.option('--product', prompt='Enter Product Id', help='Product Id (ie. BTC-USD)')
@@ -121,7 +120,62 @@ def get_product_ticker(product):
 
     public_client = cbpro.PublicClient()
     ticker = public_client.get_product_ticker(product)
-    pprint.pprint(ticker)
+    print(json.dumps(ticker, indent=4, sort_keys=True))
+
+@cli.command()
+@click.option('--product', prompt='Enter Product Id', help='Product Id (ie. BTC-USD)')
+@click.option('--before', prompt='Before', help='Start time in ISO 8601')
+@click.option('--after', prompt='After', help='End time in ISO 8601')
+@click.option('--limit', default=100, help='The desired number of trades')
+def get_product_trades(product, before, after, limit):
+    """List the latest trade history for a product.
+
+    This method returns a generator which may make multiple HTTP requests
+    while iterating through it.
+
+    **Caution**: Current released version of cbpro python library does not pass
+    --before, --after, and --limit options to paginated request. These options
+    thus have no effect.
+
+    \b
+    Returns:
+        list: Latest trades. Example::
+            [{
+                "time": "2014-11-07T22:19:28.578544Z",
+                "trade_id": 74,
+                "price": "10.00000000",
+                "size": "0.01000000",
+                "side": "buy"
+            }, {
+                "time": "2014-11-07T01:08:43.642366Z",
+                "trade_id": 73,
+                "price": "100.00000000",
+                "size": "0.01000000",
+                "side": "sell"
+            }]
+
+    \b
+    Coinbase API Documentation:
+    https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_getproducttrades
+    """
+
+    public_client = cbpro.PublicClient()
+
+    # Returns a generator obj
+    trades = public_client.get_product_trades(product_id=product,
+                                            before=before,
+                                            after=after,
+                                            limit=limit)
+
+    # Iterate through generator obj
+    i = 0
+    for x in trades:
+        i += 1
+        # Work-around for pagination bug until issue is resolved:
+        # https://github.com/danpaquin/coinbasepro-python/pull/427
+        if i > limit:
+            break
+        print(f"[{i}]:", json.dumps(x, indent=4, sort_keys=True))
 
 @cli.command()
 @click.option('--product', prompt='Enter Product Id', help='Product Id (ie. BTC-USD)')
