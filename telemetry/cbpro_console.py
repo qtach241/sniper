@@ -15,6 +15,8 @@ import btalib
 
 import click
 
+from cbpro_level2_order_book import L2OrderBook
+
 @click.group()
 def cli():
     """A Coinbase API console using cbpro python library."""
@@ -297,7 +299,7 @@ def get_time():
 @cli.command()
 @click.option('--product', prompt='Enter Product Id', help='Product Id (ie. BTC-USD)')
 @click.option('--expiry', default=60, help='Time (in seconds) to remain subscribed')
-def order_book(product, expiry):
+def level3_order_book(product, expiry):
     """Logs real-time changes to the bid-ask spread to console.
 
     The orderbook client will maintain a level3 order book and echo any changes
@@ -340,7 +342,19 @@ def order_book(product, expiry):
     order_book_console = OrderBookConsole(product)
     order_book_console.start()
     time.sleep(expiry)
+    print(order_book_console.get_current_book())
     order_book_console.close()
+
+@cli.command()
+@click.option('--product', prompt='Enter Product Id', help='Product Id (ie. BTC-USD)')
+@click.option('--expiry', default=60, help='Time (in seconds) to remain subscribed')
+def level2_order_book(product, expiry):
+    """Maintain a real-time level 2 order book."""
+    
+    l2_order_book = L2OrderBook(product_id=product)
+    l2_order_book.start()
+    time.sleep(expiry)
+    l2_order_book.close()
 
 @cli.command()
 @click.option('--product', prompt='Enter Product Id', help='Product Id (ie. BTC-USD)')
