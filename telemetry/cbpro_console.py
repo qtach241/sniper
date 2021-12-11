@@ -4,8 +4,9 @@ import logging
 import os
 import socket
 import threading
-import time
 import json
+import time
+import datetime as dt
 from auth_keys import (api_secret, api_key, api_pass)
 
 import cbpro
@@ -292,6 +293,54 @@ def get_time():
     public_client = cbpro.PublicClient()
     api_time = public_client.get_time()
     print(json.dumps(api_time, indent=4, sort_keys=True))
+
+@cli.command()
+@click.option('--product', prompt='Enter Product Id', help='Product Id (ie. BTC-USD)')
+@click.option('--expiry', default=60, help='Time (in seconds) to remain subscribed')
+def order_book(product, expiry):
+    """Logs real-time changes to the bid-ask spread to console.
+
+    The orderbook client will maintain a level3 order book and echo any changes
+    to the terminal until the expiry time (default 60 seconds).
+    """
+
+    class OrderBookConsole(cbpro.OrderBook):
+        def __init__(self, product_id=None):
+            super(OrderBookConsole, self).__init__(product_id)
+
+            # Latest values of bid-ask spread
+            self._bid = None
+            self._ask = None
+            self._bid_depth = None
+            self._ask_depth = None
+
+        def on_message(self, message):
+            super(OrderBookConsole, self).on_message(message)
+
+            # Calculate newest bid-ask spread
+            bid = self.get_bid()
+            bids = self.get_bids(bid)
+            bid_depth = sum([b['size'] for b in bids])
+            ask = self.get_ask()
+            asks = self.get_asks(ask)
+            ask_depth = sum([a['size'] for a in asks])
+
+            if self._bid == bid and self._ask == ask and self._bid_depth == bid_depth and self._ask_depth == ask_depth:
+                # If there are no changes to the bid-ask spread since the last update, no need to print
+                print("no change")
+            else:
+                # If there are differences, update the cache
+                self._bid = bid
+                self._ask = ask
+                self._bid_depth = bid_depth
+                self._ask_depth = ask_depth
+                print('{} {} bid: {:.3f} @ {:.2f}\task: {:.3f} @ {:.2f}'.format(
+                    dt.datetime.now(), self.product_id, bid_depth, bid, ask_depth, ask))
+
+    order_book_console = OrderBookConsole(product)
+    order_book_console.start()
+    time.sleep(expiry)
+    order_book_console.close()
 
 @cli.command()
 @click.option('--product', prompt='Enter Product Id', help='Product Id (ie. BTC-USD)')
