@@ -770,7 +770,25 @@ def level2_order_book(product, expiry):
     l2_order_book.start()
     time.sleep(expiry)
     snap = l2_order_book.export_raw_snapshot()
-    print(snap)
+    
+    ask = l2_order_book.get_ask()
+    ask_labels = ['ASK_B-10', 'ASK_B-09', 'ASK_B-08', 'ASK_B-07', 'ASK_B-06', 'ASK_B-05', 'ASK_B-04', 'ASK_B-03', 'ASK_B-02', 'ASK_B-01']
+    ask_bins = [ask, ask+(ask/1024), ask+(ask/512), ask+(ask/256), ask+(ask/128), ask+(ask/64), ask+(ask/32), ask+(ask/16), ask+(ask/8), ask+(ask/4), ask+(ask/2)]
+    snap[0]['price_bins'] = pandas.cut(snap[0]['price'], bins=ask_bins, labels=ask_labels)
+    #print(snap[0].to_string())
+
+    bid = l2_order_book.get_bid()
+    bid_labels = ['BID_B-01', 'BID_B-02', 'BID_B-03', 'BID_B-04', 'BID_B-05', 'BID_B-06', 'BID_B-07', 'BID_B-08', 'BID_B-09', 'BID_B-10']
+    bid_bins = [bid-(bid/2), bid-(bid/4), bid-(bid/8), bid-(bid/16), bid-(bid/32), bid-(bid/64), bid-(bid/128), bid-(bid/256), bid-(bid/512), bid-(bid/1024), bid]
+    snap[1]['price_bins'] = pandas.cut(snap[1]['price'], bins=bid_bins, labels=bid_labels)
+    #print(snap[1].to_string())
+
+    grouped_asks = snap[0].groupby('price_bins').agg({'size': 'sum'})
+    print(grouped_asks)
+
+    grouped_bids = snap[1].groupby('price_bins').agg({'size': 'sum'})
+    print(grouped_bids)
+
     l2_order_book.close()
 
 @cli.command()
@@ -812,6 +830,7 @@ def subscribe(product, channel, expiry):
 
     websocket_client = MyWebsocketClient(url="wss://ws-feed.pro.coinbase.com",
                                     products=[f"{product}"],
+                                    #products=['SOL-USD', 'SOL-EUR', 'SOL-BTC'],
                                     channels=[f"{channel}"])
     websocket_client.start()
     time.sleep(expiry)
