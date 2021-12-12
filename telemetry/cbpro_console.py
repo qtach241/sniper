@@ -354,6 +354,8 @@ def level2_order_book(product, expiry):
     l2_order_book = L2OrderBook(product_id=product)
     l2_order_book.start()
     time.sleep(expiry)
+    snap = l2_order_book.export_raw_snapshot()
+    print(snap)
     l2_order_book.close()
 
 @cli.command()

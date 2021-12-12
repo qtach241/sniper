@@ -4,6 +4,7 @@ import datetime as dt
 import cbpro
 from decimal import Decimal
 from sortedcontainers.sorteddict import SortedDict
+import pandas
 
 import pprint
 
@@ -12,6 +13,11 @@ class L2OrderBook(cbpro.WebsocketClient):
         super(L2OrderBook, self).__init__(products=product_id, channels=['level2'])
         self._asks = SortedDict()
         self._bids = SortedDict()
+
+    @property
+    def product_id(self):
+        """Order Book only supports a single product currently."""
+        return self.products[0]
         
     def apply_snapshot(self, message):
         self._asks.clear()
@@ -26,6 +32,13 @@ class L2OrderBook(cbpro.WebsocketClient):
             self._asks[price] = size
 
     def apply_update(self, message):
+        # TODO: Compare current time with "time" key and if too much slippage,
+        # re-subscribe to the feed and sync to the new snapshot.
+        # msg_time = message['time']
+        if self.product_id != message['product_id']:
+            print(f"Unexpected Product Id. Received: {message['product_id']}, Expected: {self.product_id}")
+            return
+
         for change in message['changes']:
             side = change[0]
             price = Decimal(change[1])
@@ -64,7 +77,15 @@ class L2OrderBook(cbpro.WebsocketClient):
         return self._bids.peekitem(-1)[0]
 
     def get_spread(self):
-        return (self.get_ask() - self.get_bid())
+        return self.get_ask() - self.get_bid()
 
     def get_mid_market_price(self):
         return (self.get_bid() + (self.get_spread()/2))
+
+    def export_raw_snapshot(self):
+        df_asks = pandas.DataFrame(list(self._asks.items()), columns=['price', 'size'])
+        df_bids = pandas.DataFrame(list(self._bids.items()), columns=['price', 'size'])
+        return (df_asks, df_bids)
+
+    def export_agg_snapshot(self):
+        pass
