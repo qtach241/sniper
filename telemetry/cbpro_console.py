@@ -14,6 +14,7 @@ import pandas
 import btalib
 
 import click
+import matplotlib.pyplot as plt
 
 from cbpro_level2_order_book import L2OrderBook
 
@@ -765,41 +766,19 @@ def level3_order_book(product, expiry):
 @click.option('--expiry', default=60, help='Time (in seconds) to remain subscribed')
 def level2_order_book(product, expiry):
     """Maintain a real-time level 2 order book."""
-    
+
     l2_order_book = L2OrderBook(product_id=product)
     l2_order_book.start()
     time.sleep(expiry)
-    snap = l2_order_book.export_raw_snapshot()
-    
-    ask = l2_order_book.get_ask()
-    ask_labels = ['ASK_B-10', 'ASK_B-09', 'ASK_B-08', 'ASK_B-07', 'ASK_B-06', 'ASK_B-05', 'ASK_B-04', 'ASK_B-03', 'ASK_B-02', 'ASK_B-01']
-    ask_bins = [ask, ask+(ask/1024), ask+(ask/512), ask+(ask/256), ask+(ask/128), ask+(ask/64), ask+(ask/32), ask+(ask/16), ask+(ask/8), ask+(ask/4), ask+(ask/2)]
-    snap[0]['price_bins'] = pandas.cut(snap[0]['price'], bins=ask_bins, labels=ask_labels, include_lowest=True)
-    print(snap[0])
-    print(snap[0].describe())
-    #print(snap[0]['size'].sum())
-
-    bid = l2_order_book.get_bid()
-    bid_labels = ['BID_B-01', 'BID_B-02', 'BID_B-03', 'BID_B-04', 'BID_B-05', 'BID_B-06', 'BID_B-07', 'BID_B-08', 'BID_B-09', 'BID_B-10']
-    bid_bins = [bid-(bid/2), bid-(bid/4), bid-(bid/8), bid-(bid/16), bid-(bid/32), bid-(bid/64), bid-(bid/128), bid-(bid/256), bid-(bid/512), bid-(bid/1024), bid]
-    snap[1]['price_bins'] = pandas.cut(snap[1]['price'], bins=bid_bins, labels=bid_labels, include_lowest=True)
-    print(snap[1])
-    print(snap[1].describe())
-    #print(snap[1]['size'].sum())
-
-    grouped_asks = snap[0].groupby('price_bins').agg({'price': ['min', 'max'], 'size': 'sum'})
-    print(grouped_asks)
-    ask_checksum = grouped_asks['size'].sum()
-    ask_cmpsum = snap[0]['size'].sum()
-    print(f"Checksum: {ask_checksum} vs {ask_cmpsum}")
-
-    grouped_bids = snap[1].groupby('price_bins').agg({'price': ['min', 'max'], 'size': 'sum'})
-    print(grouped_bids)
-    bid_checksum = grouped_bids['size'].sum()
-    bid_cmpsum = snap[1]['size'].sum()
-    print(f"Checksum: {bid_checksum} vs {bid_cmpsum}")
-
     l2_order_book.close()
+
+    book = l2_order_book.export_grouped_snapshot()
+
+    book[1]['size'] = book[1]['size'].apply(pandas.to_numeric)
+    book[1].plot.bar(x='price_bins', y='size')
+    book[0]['size'] = book[0]['size'].apply(pandas.to_numeric)
+    book[0].plot.bar(x='price_bins', y='size')
+    plt.show()
 
 @cli.command()
 @click.option('--product', prompt='Enter Product Id', help='Product Id (ie. BTC-USD)')
