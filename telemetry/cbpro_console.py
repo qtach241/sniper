@@ -767,13 +767,16 @@ def level3_order_book(product, expiry):
 def level2_order_book(product, expiry):
     """Maintain a real-time level 2 order book."""
 
+    # Start the L2 order book and keep subscribed until expiry.
     l2_order_book = L2OrderBook(product_id=product)
     l2_order_book.start()
     time.sleep(expiry)
     l2_order_book.close()
 
+    # Export the final snapshot of the aggregated order book.
     book = l2_order_book.export_grouped_snapshot()
 
+    # Plot bar chart of grouped asks and bids.
     book[1]['size'] = book[1]['size'].apply(pandas.to_numeric)
     book[1].plot.bar(x='price_bins', y='size')
     book[0]['size'] = book[0]['size'].apply(pandas.to_numeric)

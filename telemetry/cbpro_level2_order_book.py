@@ -68,7 +68,7 @@ class L2OrderBook(cbpro.WebsocketClient):
             #pprint.pprint(self._bids.items())
         elif msg_type == 'l2update':
             self.apply_update(message)
-            print(f"bid: {self.get_bid()}, ask: {self.get_ask()}, spread: {self.get_spread()}, price: {self.get_mid_market_price()}")
+            #print(f"bid: {self.get_bid()}, ask: {self.get_ask()}, spread: {self.get_spread()}, price: {self.get_mid_market_price()}")
 
     def get_ask(self):
         return self._asks.peekitem(0)[0]
