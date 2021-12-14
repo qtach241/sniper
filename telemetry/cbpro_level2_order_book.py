@@ -6,11 +6,11 @@ from decimal import Decimal
 from sortedcontainers.sorteddict import SortedDict
 import pandas
 
-import pprint
+from base_level2_order_book import L2OrderBook
 
-class L2OrderBook(cbpro.WebsocketClient):
+class Cb_L2OrderBook(cbpro.WebsocketClient, L2OrderBook):
     def __init__(self, product_id='BTC-USD', log_to=None):
-        super(L2OrderBook, self).__init__(products=product_id, channels=['level2'])
+        super(Cb_L2OrderBook, self).__init__(products=product_id, channels=['level2'])
         self._asks = SortedDict()
         self._bids = SortedDict()
 
@@ -112,3 +112,13 @@ class L2OrderBook(cbpro.WebsocketClient):
         grouped_bids = raw[1].groupby('price_bins', as_index=True).agg({'size': 'sum'})
 
         return (grouped_asks, grouped_bids)
+
+    # Implement base_level2_order_book interface:
+    def create(self):
+        super(Cb_L2OrderBook, self).start()
+
+    def destroy(self):
+        super(Cb_L2OrderBook, self).close()
+
+    def export(self):
+        return self.export_grouped_snapshot()

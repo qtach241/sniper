@@ -16,7 +16,7 @@ import btalib
 import click
 import matplotlib.pyplot as plt
 
-from cbpro_level2_order_book import L2OrderBook
+from cbpro_level2_order_book import Cb_L2OrderBook
 
 @click.group()
 def cli():
@@ -768,13 +768,13 @@ def level2_order_book(product, expiry):
     """Maintain a real-time level 2 order book."""
 
     # Start the L2 order book and keep subscribed until expiry.
-    l2_order_book = L2OrderBook(product_id=product)
-    l2_order_book.start()
+    l2_order_book = Cb_L2OrderBook(product_id=product)
+    l2_order_book.create()
     time.sleep(expiry)
-    l2_order_book.close()
+    l2_order_book.destroy()
 
     # Export the final snapshot of the aggregated order book.
-    book = l2_order_book.export_grouped_snapshot()
+    book = l2_order_book.export()
     print(book[0])
     print(book[1])
     
