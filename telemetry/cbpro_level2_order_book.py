@@ -106,7 +106,9 @@ class L2OrderBook(cbpro.WebsocketClient):
         raw[1]['price_bins'] = pandas.cut(raw[1]['price'], bins=bid_bins, labels=bid_labels, include_lowest=True)
 
         # Aggregate price and size into the 10 bins (dropping any that were out of range)
-        grouped_asks = raw[0].groupby('price_bins', as_index=False).agg({'price': ['min', 'max'], 'size': 'sum'})
-        grouped_bids = raw[1].groupby('price_bins', as_index=False).agg({'price': ['min', 'max'], 'size': 'sum'})
+        #grouped_asks = raw[0].groupby('price_bins', as_index=True).agg({'price': ['min', 'max'], 'size': 'sum'})
+        #grouped_bids = raw[1].groupby('price_bins', as_index=True).agg({'price': ['min', 'max'], 'size': 'sum'})
+        grouped_asks = raw[0].groupby('price_bins', as_index=True).agg({'size': 'sum'})
+        grouped_bids = raw[1].groupby('price_bins', as_index=True).agg({'size': 'sum'})
 
         return (grouped_asks, grouped_bids)

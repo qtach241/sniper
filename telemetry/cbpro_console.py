@@ -775,12 +775,28 @@ def level2_order_book(product, expiry):
 
     # Export the final snapshot of the aggregated order book.
     book = l2_order_book.export_grouped_snapshot()
+    print(book[0])
+    print(book[1])
+    
+    # Convert order book to json
+    asks_json = book[0].to_json()
+    bids_json = book[1].to_json()
+    print(asks_json)
+    print(bids_json)
+
+    # Verify it can be converted back
+    asks_dict = json.loads(asks_json)
+    bids_dict = json.loads(bids_json)
+    asks_df = pandas.DataFrame.from_dict(asks_dict)
+    bids_df = pandas.DataFrame.from_dict(bids_dict)
+    print(asks_df)
+    print(bids_df)
 
     # Plot bar chart of grouped asks and bids.
     book[1]['size'] = book[1]['size'].apply(pandas.to_numeric)
-    book[1].plot.bar(x='price_bins', y='size')
+    book[1].plot.bar(y='size') # x defaults to index
     book[0]['size'] = book[0]['size'].apply(pandas.to_numeric)
-    book[0].plot.bar(x='price_bins', y='size')
+    book[0].plot.bar(y='size') # x defaults to index
     plt.show()
 
 @cli.command()
