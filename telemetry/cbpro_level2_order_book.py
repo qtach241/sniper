@@ -13,6 +13,7 @@ class Cb_L2OrderBook(cbpro.WebsocketClient, L2OrderBook):
         super(Cb_L2OrderBook, self).__init__(products=product_id, channels=['level2'])
         self._asks = SortedDict()
         self._bids = SortedDict()
+        self._update_time = None
 
     @property
     def product_id(self):
@@ -34,7 +35,7 @@ class Cb_L2OrderBook(cbpro.WebsocketClient, L2OrderBook):
     def apply_update(self, message):
         # TODO: Compare current time with "time" key and if too much slippage,
         # re-subscribe to the feed and sync to the new snapshot.
-        # msg_time = message['time']
+        self._update_time = message['time']
         if self.product_id != message['product_id']:
             print(f"Unexpected Product Id. Received: {message['product_id']}, Expected: {self.product_id}")
             return
@@ -119,6 +120,9 @@ class Cb_L2OrderBook(cbpro.WebsocketClient, L2OrderBook):
 
     def destroy(self):
         super(Cb_L2OrderBook, self).close()
+
+    def get_update_time(self):
+        return self._update_time
 
     def export(self):
         return self.export_grouped_snapshot()

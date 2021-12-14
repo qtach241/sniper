@@ -38,6 +38,9 @@ if __name__ == '__main__':
         cb_eth_usd_book = coinbase_eth_usd.export()
         cb_sol_usd_book = coinbase_sol_usd.export()
 
+        print("btc_usd timestamp: ", coinbase_btc_usd.get_update_time())
+        print("eth_usd timestamp: ", coinbase_eth_usd.get_update_time())
+        print("sol_usd timestamp: ", coinbase_sol_usd.get_update_time())
         print(cb_btc_usd_book)
         print(cb_eth_usd_book)
         print(cb_sol_usd_book)
