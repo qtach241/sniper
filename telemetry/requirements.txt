@@ -3,6 +3,7 @@
 #
 
 cbpro
+python-binance
 pandas
 bta-lib
 click
