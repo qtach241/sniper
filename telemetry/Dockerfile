@@ -8,9 +8,8 @@
 
 FROM python:3.6-alpine
 
-WORKDIR /usr/src
-
-pip install --user -r requirements.txt
+ADD requirements.txt /
+RUN pip install --user -r /requirements.txt
 
 ADD telemetry.py .
 
