@@ -6,47 +6,51 @@ from auth_keys import (binance_api_secret, binance_api_key)
 from binance import Client, ThreadedDepthCacheManager
 
 @click.group()
-def cli():
+@click.option('--tld', default='com', help='Top level domain (default: com)')
+@click.pass_context
+def cli(ctx, tld):
     """A Binance API console using binance-python library."""
-    pass
+    ctx.ensure_object(dict)
+    ctx.obj['client'] = Client(binance_api_key, binance_api_secret, tld=tld)
 
 @cli.command()
-def get_exchange_info():
+@click.pass_context
+def get_exchange_info(ctx):
     """Get info about the exchange."""
-
-    client = Client(binance_api_key, binance_api_secret)
-    info = client.get_exchange_info()
+    
+    info = ctx.obj['client'].get_exchange_info()
     print(json.dumps(info, indent=4, sort_keys=True))
 
 @cli.command()
+@click.pass_context
 @click.option('--symbol', prompt='Enter Symbol', help='Binance symbol (ie. BNBBTC)')
-def get_symbol_info(symbol):
+def get_symbol_info(ctx, symbol):
     """Get info about a particular symbol."""
 
-    client = Client(binance_api_key, binance_api_secret)
-    info = client.get_symbol_info(symbol)
+    info = ctx.obj['client'].get_symbol_info(symbol)
     print(json.dumps(info, indent=4, sort_keys=True))
 
 @cli.command()
-def get_all_tickers():
+@click.pass_context
+def get_all_tickers(ctx):
     """Get all symbol prices."""
 
-    client = Client(binance_api_key, binance_api_secret)
-    prices = client.get_all_tickers()
+    prices = ctx.obj['client'].get_all_tickers()
     print(json.dumps(prices, indent=4, sort_keys=True))
 
 @cli.command()
+@click.pass_context
 @click.option('--symbol', prompt='Enter Symbol', help='Binance symbol (ie. BNBBTC)')
-def get_order_book(symbol):
+def get_order_book(ctx, symbol):
     """Get market depth."""
 
-    client = Client(binance_api_key, binance_api_secret)
-    depth = client.get_order_book(symbol=symbol)
+    depth = ctx.obj['client'].get_order_book(symbol=symbol)
     print(json.dumps(depth, indent=4, sort_keys=True))
 
 @cli.command()
+@click.pass_context
 @click.option('--symbol', prompt='Enter Symbol', help='Binance symbol (ie. BNBBTC)')
-def depth_cache_manager(symbol):
+def depth_cache_manager(ctx, symbol):
     """Start a depth cache manager for a symbol."""
 
     def handle_dcm_message(depth_cache):
@@ -74,4 +78,4 @@ def depth_cache_manager(symbol):
     dcm.join()
 
 if __name__ == '__main__':
-    cli()
+    cli(obj={})
