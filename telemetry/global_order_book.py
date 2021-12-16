@@ -25,15 +25,24 @@ if __name__ == '__main__':
     Coinbase_BTC_USD = Cb_L2OrderBook(product_id='BTC-USD')
     Coinbase_ETH_USD = Cb_L2OrderBook(product_id='ETH-USD')
     Coinbase_SOL_USD = Cb_L2OrderBook(product_id='SOL-USD')
-    #Coinbase_MAT_USD = Cb_L2OrderBook(product_id='MATIC_USD')
+    Coinbase_MAT_USD = Cb_L2OrderBook(product_id='MATIC-USD')
     
+    # Layered startup
+    print("Subscribing to Coinbase BTC-USD...")
     Coinbase_BTC_USD.create()
-    Coinbase_ETH_USD.create()
-    Coinbase_SOL_USD.create()
-    #Coinbase_MAT_USD.create()
+    time.sleep(2)
 
-    # Initial time delay to finish building snapshot
-    time.sleep(5)
+    print("Subscribing to Coinbase ETH-USD...")
+    Coinbase_ETH_USD.create()
+    time.sleep(2)
+
+    print("Subscribing to Coinbase SOL-USD...")
+    Coinbase_SOL_USD.create()
+    time.sleep(2)
+
+    print("Subscribing to Coinbase MATIC-USD...")
+    Coinbase_MAT_USD.create()
+    time.sleep(2)
 
     while True:
 
@@ -54,10 +63,10 @@ if __name__ == '__main__':
         Coinbase_SOL_USD_bid = Coinbase_SOL_USD.get_bid()
         Coinbase_SOL_USD_depth = Coinbase_SOL_USD.export()
 
-        #Coinbase_MAT_USD_lut = Coinbase_MAT_USD.get_update_time()
-        #Coinbase_MAT_USD_ask = Coinbase_MAT_USD.get_ask()
-        #Coinbase_MAT_USD_bid = Coinbase_MAT_USD.get_bid()
-        #Coinbase_MAT_USD_depth = Coinbase_MAT_USD.export()
+        Coinbase_MAT_USD_lut = Coinbase_MAT_USD.get_update_time()
+        Coinbase_MAT_USD_ask = Coinbase_MAT_USD.get_ask()
+        Coinbase_MAT_USD_bid = Coinbase_MAT_USD.get_bid()
+        Coinbase_MAT_USD_depth = Coinbase_MAT_USD.export()
 
         data = {}
         data['timestamp'] = current_time
@@ -85,22 +94,22 @@ if __name__ == '__main__':
         cb_sol_usd_data['bid_depth'] = Coinbase_SOL_USD_depth[1].to_dict()
         cb_sol_usd_data['ask_depth'] = Coinbase_SOL_USD_depth[0].to_dict()
 
-        #cb_mat_usd_data = {}
-        #cb_mat_usd_data['last_update_at'] = Coinbase_MAT_USD_lut
-        #cb_mat_usd_data['bid'] = Coinbase_MAT_USD_bid
-        #cb_mat_usd_data['ask'] = Coinbase_MAT_USD_ask
-        #cb_mat_usd_data['bid_depth'] = Coinbase_MAT_USD_depth[1].to_dict()
-        #cb_mat_usd_data['ask_depth'] = Coinbase_MAT_USD_depth[0].to_dict()
+        cb_mat_usd_data = {}
+        cb_mat_usd_data['last_update_at'] = Coinbase_MAT_USD_lut
+        cb_mat_usd_data['bid'] = Coinbase_MAT_USD_bid
+        cb_mat_usd_data['ask'] = Coinbase_MAT_USD_ask
+        cb_mat_usd_data['bid_depth'] = Coinbase_MAT_USD_depth[1].to_dict()
+        cb_mat_usd_data['ask_depth'] = Coinbase_MAT_USD_depth[0].to_dict()
 
         cb_data['BTC-USD'] = cb_btc_usd_data
         cb_data['ETH-USD'] = cb_eth_usd_data
         cb_data['SOL-USD'] = cb_sol_usd_data
-        #cb_data['MATIC-USD'] = cb_mat_usd_data
+        cb_data['MATIC-USD'] = cb_mat_usd_data
 
         data['coinbase'] = cb_data
 
-        bids_df = pandas.DataFrame.from_dict(cb_sol_usd_data['bid_depth'])
-        asks_df = pandas.DataFrame.from_dict(cb_sol_usd_data['ask_depth'])
+        bids_df = pandas.DataFrame.from_dict(cb_mat_usd_data['bid_depth'])
+        asks_df = pandas.DataFrame.from_dict(cb_mat_usd_data['ask_depth'])
         print(bids_df)
         print(asks_df)
 
