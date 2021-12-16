@@ -11,13 +11,21 @@ def cli():
     pass
 
 @cli.command()
-@click.option('--symbol', prompt='Enter Symbol', help='Binance symbol (ie. BNBBTC)')
-def get_order_book(symbol):
-    """Get market depth."""
+def get_exchange_info():
+    """Get info about the exchange."""
 
     client = Client(binance_api_key, binance_api_secret)
-    depth = client.get_order_book(symbol=symbol)
-    print(json.dumps(depth, indent=4, sort_keys=True))
+    info = client.get_exchange_info()
+    print(json.dumps(info, indent=4, sort_keys=True))
+
+@cli.command()
+@click.option('--symbol', prompt='Enter Symbol', help='Binance symbol (ie. BNBBTC)')
+def get_symbol_info(symbol):
+    """Get info about a particular symbol."""
+
+    client = Client(binance_api_key, binance_api_secret)
+    info = client.get_symbol_info(symbol)
+    print(json.dumps(info, indent=4, sort_keys=True))
 
 @cli.command()
 def get_all_tickers():
@@ -26,6 +34,15 @@ def get_all_tickers():
     client = Client(binance_api_key, binance_api_secret)
     prices = client.get_all_tickers()
     print(json.dumps(prices, indent=4, sort_keys=True))
+
+@cli.command()
+@click.option('--symbol', prompt='Enter Symbol', help='Binance symbol (ie. BNBBTC)')
+def get_order_book(symbol):
+    """Get market depth."""
+
+    client = Client(binance_api_key, binance_api_secret)
+    depth = client.get_order_book(symbol=symbol)
+    print(json.dumps(depth, indent=4, sort_keys=True))
 
 @cli.command()
 @click.option('--symbol', prompt='Enter Symbol', help='Binance symbol (ie. BNBBTC)')
@@ -53,13 +70,6 @@ def depth_cache_manager(symbol):
     # multiple depth caches can be started
     #dcm_name = dcm.start_depth_cache(callback=handle_dcm_message, symbol='BNBBTC')
     #dcm_name = dcm.start_depth_cache(callback=handle_dcm_message, symbol='ETHBTC')
-
-    #while True:
-        #asks = dcm.get_depth_cache.get_asks()
-        #bids = dcm.get_depth_cache.get_bids()
-        #print(asks)
-        #print(bids)
-        #time.sleep(1)
 
     dcm.join()
 
