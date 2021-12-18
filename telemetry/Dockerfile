@@ -8,6 +8,8 @@
 
 FROM python:3.7.0-stretch
 
+WORKDIR /usr/src
+
 ADD requirements.txt .
 RUN pip install --user -r requirements.txt
 

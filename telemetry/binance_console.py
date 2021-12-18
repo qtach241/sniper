@@ -41,10 +41,11 @@ def get_all_tickers(ctx):
 @cli.command()
 @click.pass_context
 @click.option('--symbol', prompt='Enter Symbol', help='Binance symbol (ie. BNBBTC)')
-def get_order_book(ctx, symbol):
+@click.option('--limit', default=100, help='Valid limits:[5, 10, 20, 50, 100, 500, 1000, 5000]')
+def get_order_book(ctx, symbol, limit):
     """Get market depth."""
 
-    depth = ctx.obj['client'].get_order_book(symbol=symbol)
+    depth = ctx.obj['client'].get_order_book(symbol=symbol, limit=limit)
     print(json.dumps(depth, indent=4, sort_keys=True))
 
 @cli.command()
