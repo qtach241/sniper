@@ -15,13 +15,13 @@ KEY_TIMESTAMP = 't'
 KEY_EXCHANGE_COINBASE = 'cb'
 KEY_EXCHANGE_BINANCE = 'bi'
 
-# Different exchanges use different symbol / product formats, ie
-# Coinbase uses 'BTC-USD', while Binanace uses 'BTCUSD'. The key used
-# to represent and store trading pairs will use a 'btcusd' format.
-KEY_TRADING_PAIR_BTC_USD = 'btcusd'
-KEY_TRADING_PAIR_ETH_USD = 'ethusd'
-KEY_TRADING_PAIR_SOL_USD = 'solusd'
-KEY_TRADING_PAIR_MATIC_USD = 'maticusd'
+# The base currency is used to identify the trading pair. The quote
+# currency can always be assumed to be USD or equivalent (ie. USDT)
+# if it is missing from the pair.
+KEY_TRADING_PAIR_BTC_USD = 'BTC'
+KEY_TRADING_PAIR_ETH_USD = 'ETH'
+KEY_TRADING_PAIR_SOL_USD = 'SOL'
+KEY_TRADING_PAIR_MATIC_USD = 'MATIC'
 
 KEY_LAST_UPDATE_AT = 't'
 KEY_BID = 'b'
@@ -51,9 +51,22 @@ if __name__ == '__main__':
     time.sleep(2)
 
     # Start Binance L2 order books.
+    # NOTE: As of 12/18/21 Binance API truncates initial snapshot. Therefore,
+    # these order books are not 100% accurate, but will become more accurate
+    # over time.
+    Binance_BTC_USDT = Bi_L2OrderBook(symbol='BTCUSDT')
+    Binance_ETH_USDT = Bi_L2OrderBook(symbol='ETHUSDT')
     Binance_SOL_USDT = Bi_L2OrderBook(symbol='SOLUSDT')
-    
+
     # Layered startup
+    print("Subscribing to Binance BTCUSDT...")
+    Binance_BTC_USDT.create()
+    time.sleep(2)
+
+    print("Subscribing to Binance ETHUSDT...")
+    Binance_ETH_USDT.create()
+    time.sleep(2)
+
     print("Subscribing to Binance SOLUSDT...")
     Binance_SOL_USDT.create()
     time.sleep(2)
@@ -93,24 +106,11 @@ if __name__ == '__main__':
 
         current_time = dt.datetime.utcnow().isoformat()
 
-        Coinbase_BTC_USD_lut = Coinbase_BTC_USD.get_update_time()
-        Coinbase_BTC_USD_ask = Coinbase_BTC_USD.get_ask()
-        Coinbase_BTC_USD_bid = Coinbase_BTC_USD.get_bid()
         Coinbase_BTC_USD_depth = Coinbase_BTC_USD.export()
-
-        Coinbase_ETH_USD_lut = Coinbase_ETH_USD.get_update_time()
-        Coinbase_ETH_USD_ask = Coinbase_ETH_USD.get_ask()
-        Coinbase_ETH_USD_bid = Coinbase_ETH_USD.get_bid()
         Coinbase_ETH_USD_depth = Coinbase_ETH_USD.export()
-
-        Coinbase_SOL_USD_lut = Coinbase_SOL_USD.get_update_time()
-        Coinbase_SOL_USD_ask = Coinbase_SOL_USD.get_ask()
-        Coinbase_SOL_USD_bid = Coinbase_SOL_USD.get_bid()
         Coinbase_SOL_USD_depth = Coinbase_SOL_USD.export()
-
-        Binance_SOL_USDT_lut = Binance_SOL_USDT.get_update_time()
-        Binance_SOL_USDT_ask = Binance_SOL_USDT.get_ask()
-        Binance_SOL_USDT_bid = Binance_SOL_USDT.get_bid()
+        Binance_BTC_USDT_depth = Binance_BTC_USDT.export()
+        Binance_ETH_USDT_depth = Binance_ETH_USDT.export()
         Binance_SOL_USDT_depth = Binance_SOL_USDT.export()
 
         data = {}
@@ -120,36 +120,52 @@ if __name__ == '__main__':
         bi_data = {}
 
         cb_btc_usd_data = {}
-        cb_btc_usd_data[KEY_LAST_UPDATE_AT] = Coinbase_BTC_USD_lut
-        cb_btc_usd_data[KEY_BID] = Coinbase_BTC_USD_bid
-        cb_btc_usd_data[KEY_ASK] = Coinbase_BTC_USD_ask
+        cb_btc_usd_data[KEY_LAST_UPDATE_AT] = Coinbase_BTC_USD.get_update_time()
+        cb_btc_usd_data[KEY_BID] = Coinbase_BTC_USD.get_bid()
+        cb_btc_usd_data[KEY_ASK] = Coinbase_BTC_USD.get_ask()
         cb_btc_usd_data[KEY_BID_DEPTH] = Coinbase_BTC_USD_depth[1].to_dict()
         cb_btc_usd_data[KEY_ASK_DEPTH] = Coinbase_BTC_USD_depth[0].to_dict()
 
         cb_eth_usd_data = {}
-        cb_eth_usd_data[KEY_LAST_UPDATE_AT] = Coinbase_ETH_USD_lut
-        cb_eth_usd_data[KEY_BID] = Coinbase_ETH_USD_bid
-        cb_eth_usd_data[KEY_ASK] = Coinbase_ETH_USD_ask
+        cb_eth_usd_data[KEY_LAST_UPDATE_AT] = Coinbase_ETH_USD.get_update_time()
+        cb_eth_usd_data[KEY_BID] = Coinbase_ETH_USD.get_bid()
+        cb_eth_usd_data[KEY_ASK] = Coinbase_ETH_USD.get_ask()
         cb_eth_usd_data[KEY_BID_DEPTH] = Coinbase_ETH_USD_depth[1].to_dict()
         cb_eth_usd_data[KEY_ASK_DEPTH] = Coinbase_ETH_USD_depth[0].to_dict()
 
         cb_sol_usd_data = {}
-        cb_sol_usd_data[KEY_LAST_UPDATE_AT] = Coinbase_SOL_USD_lut
-        cb_sol_usd_data[KEY_BID] = Coinbase_SOL_USD_bid
-        cb_sol_usd_data[KEY_ASK] = Coinbase_SOL_USD_ask
+        cb_sol_usd_data[KEY_LAST_UPDATE_AT] = Coinbase_SOL_USD.get_update_time()
+        cb_sol_usd_data[KEY_BID] = Coinbase_SOL_USD.get_bid()
+        cb_sol_usd_data[KEY_ASK] = Coinbase_SOL_USD.get_ask()
         cb_sol_usd_data[KEY_BID_DEPTH] = Coinbase_SOL_USD_depth[1].to_dict()
         cb_sol_usd_data[KEY_ASK_DEPTH] = Coinbase_SOL_USD_depth[0].to_dict()
 
+        bi_btc_usdt_data = {}
+        bi_btc_usdt_data[KEY_LAST_UPDATE_AT] = Binance_BTC_USDT.get_update_time()
+        bi_btc_usdt_data[KEY_BID] = Binance_BTC_USDT.get_bid()
+        bi_btc_usdt_data[KEY_ASK] = Binance_BTC_USDT.get_ask()
+        bi_btc_usdt_data[KEY_BID_DEPTH] = Binance_BTC_USDT_depth[1].to_dict()
+        bi_btc_usdt_data[KEY_ASK_DEPTH] = Binance_BTC_USDT_depth[0].to_dict()
+
+        bi_eth_usdt_data = {}
+        bi_eth_usdt_data[KEY_LAST_UPDATE_AT] = Binance_ETH_USDT.get_update_time()
+        bi_eth_usdt_data[KEY_BID] = Binance_ETH_USDT.get_bid()
+        bi_eth_usdt_data[KEY_ASK] = Binance_ETH_USDT.get_ask()
+        bi_eth_usdt_data[KEY_BID_DEPTH] = Binance_ETH_USDT_depth[1].to_dict()
+        bi_eth_usdt_data[KEY_ASK_DEPTH] = Binance_ETH_USDT_depth[0].to_dict()
+
         bi_sol_usdt_data = {}
-        bi_sol_usdt_data[KEY_LAST_UPDATE_AT] = Binance_SOL_USDT_lut
-        bi_sol_usdt_data[KEY_BID] = Binance_SOL_USDT_bid
-        bi_sol_usdt_data[KEY_ASK] = Binance_SOL_USDT_ask
+        bi_sol_usdt_data[KEY_LAST_UPDATE_AT] = Binance_SOL_USDT.get_update_time()
+        bi_sol_usdt_data[KEY_BID] = Binance_SOL_USDT.get_bid()
+        bi_sol_usdt_data[KEY_ASK] = Binance_SOL_USDT.get_ask()
         bi_sol_usdt_data[KEY_BID_DEPTH] = Binance_SOL_USDT_depth[1].to_dict()
         bi_sol_usdt_data[KEY_ASK_DEPTH] = Binance_SOL_USDT_depth[0].to_dict()
 
         cb_data[KEY_TRADING_PAIR_BTC_USD] = cb_btc_usd_data
         cb_data[KEY_TRADING_PAIR_ETH_USD] = cb_eth_usd_data
         cb_data[KEY_TRADING_PAIR_SOL_USD] = cb_sol_usd_data
+        bi_data[KEY_TRADING_PAIR_BTC_USD] = bi_btc_usdt_data
+        bi_data[KEY_TRADING_PAIR_ETH_USD] = bi_eth_usdt_data
         bi_data[KEY_TRADING_PAIR_SOL_USD] = bi_sol_usdt_data
 
         data[KEY_EXCHANGE_COINBASE] = cb_data
