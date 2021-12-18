@@ -46,14 +46,14 @@ class Cb_L2OrderBook(cbpro.WebsocketClient, L2OrderBook):
             size = Decimal(change[2]) 
             if side == 'buy':
                 if size <= 0:
-                    self._bids.pop(price)
+                    self._bids.pop(price, default=0)
                     #print("Removed bid price level: ", price)
                 else:
                     self._bids[price] = size
                     #print(f"Bid price level {price} updated to size {size}")
             elif side == 'sell':
                 if size <= 0:
-                    self._asks.pop(price)
+                    self._asks.pop(price, default=0)
                     #print("Removed ask price level: ", price)
                 else:
                     self._asks[price] = size
