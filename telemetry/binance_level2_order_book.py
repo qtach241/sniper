@@ -32,7 +32,7 @@ class Bn_L2OrderBook(L2OrderBook):
         if event_type == 'depthUpdate':
             self._queue.put(message)
             #print("msg: ", message)
-            print("Enqueue - size: ", self._queue.qsize())
+            print(f"Enqueue. Size: {self._queue.qsize()}, U:{message['U']}, u:{message['u']}")
         else:
             print("on_message unrecognized event type: ", event_type)
 
@@ -40,11 +40,11 @@ class Bn_L2OrderBook(L2OrderBook):
         prev_final_id = 0
         while True:
             msg = self._queue.get()
-            print("Dequeue - size: ", self._queue.qsize())
+            print(f"Dequeue. Size: {self._queue.qsize()}, U:{msg['U']}, u:{msg['u']}")
             if msg['u'] <= self._snapshot_id:
                 # Drop any event where 'u' (final update Id in event) is less than
                 # the snapshot Id.
-                print(f"Dropping old event {msg['u']} less than {self._snapshot_id}")
+                print(f"Dropping old event {msg['u']} <= {self._snapshot_id}")
                 continue
 
             if prev_final_id > 0 and msg['U'] != (prev_final_id+1):
@@ -108,6 +108,10 @@ class Bn_L2OrderBook(L2OrderBook):
                                                 symbol=self._symbol,
                                                 interval=self._interval)
 
+        # Short delay to let buffer fill up a bit. Otherwise, there will be an initial gap
+        # between the snapshot update Id and the first diff update Id.
+        time.sleep(1)
+
         # Get a depth snapshot from REST endpoint
         self._client = Client(binance_api_key, binance_api_secret)
         depth = self._client.get_order_book(symbol=self._symbol, limit=5000)
@@ -128,5 +132,5 @@ class Bn_L2OrderBook(L2OrderBook):
         pass
 
 if __name__ == '__main__':
-    bn_order_book = Bn_L2OrderBook(symbol="BTCUSDT")
+    bn_order_book = Bn_L2OrderBook(symbol="SOLUSDT")
     bn_order_book.create()
