@@ -36,7 +36,6 @@ if __name__ == '__main__':
     Coinbase_BTC_USD = Cb_L2OrderBook(product_id='BTC-USD')
     Coinbase_ETH_USD = Cb_L2OrderBook(product_id='ETH-USD')
     Coinbase_SOL_USD = Cb_L2OrderBook(product_id='SOL-USD')
-    Coinbase_MAT_USD = Cb_L2OrderBook(product_id='MATIC-USD')
     
     # Layered startup
     print("Subscribing to Coinbase BTC-USD...")
@@ -49,10 +48,6 @@ if __name__ == '__main__':
 
     print("Subscribing to Coinbase SOL-USD...")
     Coinbase_SOL_USD.create()
-    time.sleep(2)
-
-    print("Subscribing to Coinbase MATIC-USD...")
-    Coinbase_MAT_USD.create()
     time.sleep(2)
 
     # Start Binance L2 order books.
@@ -113,11 +108,6 @@ if __name__ == '__main__':
         Coinbase_SOL_USD_bid = Coinbase_SOL_USD.get_bid()
         Coinbase_SOL_USD_depth = Coinbase_SOL_USD.export()
 
-        Coinbase_MAT_USD_lut = Coinbase_MAT_USD.get_update_time()
-        Coinbase_MAT_USD_ask = Coinbase_MAT_USD.get_ask()
-        Coinbase_MAT_USD_bid = Coinbase_MAT_USD.get_bid()
-        Coinbase_MAT_USD_depth = Coinbase_MAT_USD.export()
-
         Binance_SOL_USDT_lut = Binance_SOL_USDT.get_update_time()
         Binance_SOL_USDT_ask = Binance_SOL_USDT.get_ask()
         Binance_SOL_USDT_bid = Binance_SOL_USDT.get_bid()
@@ -150,13 +140,6 @@ if __name__ == '__main__':
         cb_sol_usd_data[KEY_BID_DEPTH] = Coinbase_SOL_USD_depth[1].to_dict()
         cb_sol_usd_data[KEY_ASK_DEPTH] = Coinbase_SOL_USD_depth[0].to_dict()
 
-        cb_mat_usd_data = {}
-        cb_mat_usd_data[KEY_LAST_UPDATE_AT] = Coinbase_MAT_USD_lut
-        cb_mat_usd_data[KEY_BID] = Coinbase_MAT_USD_bid
-        cb_mat_usd_data[KEY_ASK] = Coinbase_MAT_USD_ask
-        cb_mat_usd_data[KEY_BID_DEPTH] = Coinbase_MAT_USD_depth[1].to_dict()
-        cb_mat_usd_data[KEY_ASK_DEPTH] = Coinbase_MAT_USD_depth[0].to_dict()
-
         bi_sol_usdt_data = {}
         bi_sol_usdt_data[KEY_LAST_UPDATE_AT] = Binance_SOL_USDT_lut
         bi_sol_usdt_data[KEY_BID] = Binance_SOL_USDT_bid
@@ -167,7 +150,6 @@ if __name__ == '__main__':
         cb_data[KEY_TRADING_PAIR_BTC_USD] = cb_btc_usd_data
         cb_data[KEY_TRADING_PAIR_ETH_USD] = cb_eth_usd_data
         cb_data[KEY_TRADING_PAIR_SOL_USD] = cb_sol_usd_data
-        cb_data[KEY_TRADING_PAIR_MATIC_USD] = cb_mat_usd_data
         bi_data[KEY_TRADING_PAIR_SOL_USD] = bi_sol_usdt_data
 
         data[KEY_EXCHANGE_COINBASE] = cb_data
