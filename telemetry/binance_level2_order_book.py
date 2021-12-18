@@ -151,7 +151,12 @@ class Bi_L2OrderBook(L2OrderBook):
         # between the snapshot update Id and the first diff update Id.
         time.sleep(1)
 
-        # Get a depth snapshot from REST endpoint
+        # Get a depth snapshot from REST endpoint.
+        # NOTE: Currently, Binance API is deficient when it comes to level 2 order book synchronization.
+        # The initial snapshot truncates to a maximum depth of 5000 results, which does not capture
+        # the full level 2 order book snapshot. Essentially, the local book is NEVER in sync with the
+        # server book, although over time, the local book should get closer.
+        # See: https://issueexplorer.com/issue/bmoscon/cryptofeed/604
         self._client = Client(binance_api_key, binance_api_secret)
         depth = self._client.get_order_book(symbol=self._symbol, limit=5000)
         self.apply_snapshot(depth)
