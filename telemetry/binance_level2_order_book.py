@@ -1,16 +1,14 @@
 import time
-import json
-import click
-import asyncio
 import threading
 import queue
 import pandas
 from decimal import Decimal
 from sortedcontainers.sorteddict import SortedDict
-from auth_keys import (binance_api_secret, binance_api_key)
-from binance import Client, AsyncClient, ThreadedDepthCacheManager
+
+from binance import Client
 from binance.streams import ThreadedWebsocketManager
 from base_level2_order_book import L2OrderBook
+from auth_keys import (binance_api_secret, binance_api_key)
 
 class Bi_L2OrderBook(L2OrderBook):
     def __init__(self, symbol='BNBBTC', interval=100, log_to=None):

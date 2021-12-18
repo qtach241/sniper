@@ -1,20 +1,9 @@
-import sys
-import getopt
-import logging
-import os
-import socket
-import threading
-import simplejson as json
 import time
 import datetime as dt
-from auth_keys import (api_secret, api_key, api_pass)
-
-import cbpro
+import simplejson as json
 import pandas
-import btalib
-
-import click
 import matplotlib.pyplot as plt
+from auth_keys import (api_secret, api_key, api_pass)
 
 from binance_level2_order_book import Bi_L2OrderBook
 from cbpro_level2_order_book import Cb_L2OrderBook
