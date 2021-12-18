@@ -10,8 +10,13 @@ FROM python:3.7.0-stretch
 
 WORKDIR /usr/src
 
-ADD requirements.txt .
-RUN pip install --user -r requirements.txt
+RUN pip install simplejson
+RUN pip install cbpro
+RUN pip install python-binance
+RUN pip install pandas
+RUN pip install bta-lib
+RUN pip install click
+RUN pip install pymongo
 
 ADD auth_keys.py .
 ADD base_level2_order_book.py .
