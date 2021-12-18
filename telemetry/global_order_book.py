@@ -2,11 +2,13 @@ import time
 import datetime as dt
 import simplejson as json
 import pandas
-import matplotlib.pyplot as plt
 from auth_keys import (api_secret, api_key, api_pass)
 
 from binance_level2_order_book import Bi_L2OrderBook
 from cbpro_level2_order_book import Cb_L2OrderBook
+
+import matplotlib.pyplot as plt
+from matplotlib import animation
 
 KEY_TIMESTAMP = 't'
 
@@ -61,6 +63,37 @@ if __name__ == '__main__':
     Binance_SOL_USDT.create()
     time.sleep(2)
 
+    # Setup data visualizations
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1)
+    ys = []
+    xs = []
+
+    def animate(i, xs, ys):
+        # Sample price from order book
+        price = Coinbase_SOL_USD.get_mid_market_price()
+        
+        # Add x and y to lists
+        xs.append(dt.datetime.now().strftime('%H:%M:%S'))
+        ys.append(price)
+
+        # Limit x and y lists to 100 entries
+        xs = xs[-100:]
+        ys = ys[-100:]
+
+        # Draw x and y lists
+        ax.clear()
+        ax.plot(xs, ys)
+
+        # Format plot
+        plt.xticks(rotation=45, ha='right')
+        plt.subplots_adjust(bottom=0.30)
+        plt.title('SOL-USD price over Time')
+        plt.ylabel('SOL-USD price')
+
+    #ani = animation.FuncAnimation(fig, animate, fargs=(xs, ys), interval=5000)
+    #plt.show()
+
     while True:
 
         current_time = dt.datetime.utcnow().isoformat()
@@ -94,6 +127,7 @@ if __name__ == '__main__':
         data[KEY_TIMESTAMP] = current_time
         
         cb_data = {}
+        bi_data = {}
 
         cb_btc_usd_data = {}
         cb_btc_usd_data[KEY_LAST_UPDATE_AT] = Coinbase_BTC_USD_lut
@@ -123,13 +157,6 @@ if __name__ == '__main__':
         cb_mat_usd_data[KEY_BID_DEPTH] = Coinbase_MAT_USD_depth[1].to_dict()
         cb_mat_usd_data[KEY_ASK_DEPTH] = Coinbase_MAT_USD_depth[0].to_dict()
 
-        cb_data[KEY_TRADING_PAIR_BTC_USD] = cb_btc_usd_data
-        cb_data[KEY_TRADING_PAIR_ETH_USD] = cb_eth_usd_data
-        cb_data[KEY_TRADING_PAIR_SOL_USD] = cb_sol_usd_data
-        cb_data[KEY_TRADING_PAIR_MATIC_USD] = cb_mat_usd_data
-
-        bi_data = {}
-
         bi_sol_usdt_data = {}
         bi_sol_usdt_data[KEY_LAST_UPDATE_AT] = Binance_SOL_USDT_lut
         bi_sol_usdt_data[KEY_BID] = Binance_SOL_USDT_bid
@@ -137,15 +164,21 @@ if __name__ == '__main__':
         bi_sol_usdt_data[KEY_BID_DEPTH] = Binance_SOL_USDT_depth[1].to_dict()
         bi_sol_usdt_data[KEY_ASK_DEPTH] = Binance_SOL_USDT_depth[0].to_dict()
 
+        cb_data[KEY_TRADING_PAIR_BTC_USD] = cb_btc_usd_data
+        cb_data[KEY_TRADING_PAIR_ETH_USD] = cb_eth_usd_data
+        cb_data[KEY_TRADING_PAIR_SOL_USD] = cb_sol_usd_data
+        cb_data[KEY_TRADING_PAIR_MATIC_USD] = cb_mat_usd_data
         bi_data[KEY_TRADING_PAIR_SOL_USD] = bi_sol_usdt_data
 
         data[KEY_EXCHANGE_COINBASE] = cb_data
         data[KEY_EXCHANGE_BINANCE] = bi_data
 
-        bids_df = pandas.DataFrame.from_dict(cb_mat_usd_data[KEY_BID_DEPTH])
-        asks_df = pandas.DataFrame.from_dict(cb_mat_usd_data[KEY_ASK_DEPTH])
-        print(bids_df)
-        print(asks_df)
+        #bids_df = pandas.DataFrame.from_dict(cb_sol_usd_data[KEY_BID_DEPTH])
+        #asks_df = pandas.DataFrame.from_dict(cb_sol_usd_data[KEY_ASK_DEPTH])
+        #bids_df['size'] = bids_df['size'].apply(pandas.to_numeric)
+        #asks_df['size'] = asks_df['size'].apply(pandas.to_numeric)
+        #print(bids_df)
+        #print(asks_df)
 
         json_data = json.dumps(data)
         print(json_data)
