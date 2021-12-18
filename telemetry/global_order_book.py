@@ -16,6 +16,7 @@ import btalib
 import click
 import matplotlib.pyplot as plt
 
+from binance_level2_order_book import Bi_L2OrderBook
 from cbpro_level2_order_book import Cb_L2OrderBook
 
 if __name__ == '__main__':
@@ -44,6 +45,14 @@ if __name__ == '__main__':
     Coinbase_MAT_USD.create()
     time.sleep(2)
 
+    # Start Binance L2 order books.
+    Binance_SOL_USDT = Bi_L2OrderBook(symbol='SOLUSDT')
+    
+    # Layered startup
+    print("Subscribing to Binance SOLUSDT...")
+    Binance_SOL_USDT.create()
+    time.sleep(2)
+
     while True:
 
         current_time = dt.datetime.utcnow().isoformat()
@@ -67,6 +76,11 @@ if __name__ == '__main__':
         Coinbase_MAT_USD_ask = Coinbase_MAT_USD.get_ask()
         Coinbase_MAT_USD_bid = Coinbase_MAT_USD.get_bid()
         Coinbase_MAT_USD_depth = Coinbase_MAT_USD.export()
+
+        Binance_SOL_USDT_lut = Binance_SOL_USDT.get_update_time()
+        Binance_SOL_USDT_ask = Binance_SOL_USDT.get_ask()
+        Binance_SOL_USDT_bid = Binance_SOL_USDT.get_bid()
+        Binance_SOL_USDT_depth = Binance_SOL_USDT.export()
 
         data = {}
         data['timestamp'] = current_time
@@ -106,7 +120,19 @@ if __name__ == '__main__':
         cb_data['SOL-USD'] = cb_sol_usd_data
         cb_data['MATIC-USD'] = cb_mat_usd_data
 
+        bi_data = {}
+
+        bi_sol_usdt_data = {}
+        bi_sol_usdt_data['last_update_at'] = Binance_SOL_USDT_lut
+        bi_sol_usdt_data['bid'] = Binance_SOL_USDT_bid
+        bi_sol_usdt_data['ask'] = Binance_SOL_USDT_ask
+        bi_sol_usdt_data['bid_depth'] = Binance_SOL_USDT_depth[1].to_dict()
+        bi_sol_usdt_data['ask_depth'] = Binance_SOL_USDT_depth[0].to_dict()
+
+        bi_data['SOLUSDT'] = bi_sol_usdt_data
+
         data['coinbase'] = cb_data
+        data['binance'] = bi_data
 
         bids_df = pandas.DataFrame.from_dict(cb_mat_usd_data['bid_depth'])
         asks_df = pandas.DataFrame.from_dict(cb_mat_usd_data['ask_depth'])
