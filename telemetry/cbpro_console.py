@@ -1,20 +1,11 @@
-import sys
-import getopt
-import logging
-import os
-import socket
-import threading
 import json
 import time
 import datetime as dt
-from auth_keys import (api_secret, api_key, api_pass)
-
 import cbpro
 import pandas
-import btalib
-
 import click
 import matplotlib.pyplot as plt
+from auth_keys import (api_secret, api_key, api_pass)
 
 from cbpro_level2_order_book import Cb_L2OrderBook
 
