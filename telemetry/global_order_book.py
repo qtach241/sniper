@@ -12,6 +12,15 @@ from cbpro_level2_order_book import Cb_L2OrderBook
 import matplotlib.pyplot as plt
 from matplotlib import animation
 
+"""
+Global Order Book: Version History
+
+1.0:
+- Initial Version.
+- 10% depth. Binance order books are not accurate.
+
+"""
+
 VERSION_STRING = '1.0'
 
 KEY_METADATA = 'm'
