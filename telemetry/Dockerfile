@@ -17,6 +17,7 @@ RUN pip install pandas
 RUN pip install bta-lib
 RUN pip install click
 RUN pip install pymongo
+RUN pip install matplotlib
 
 ADD auth_keys.py .
 ADD base_level2_order_book.py .
