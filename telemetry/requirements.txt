@@ -1,7 +1,8 @@
-# This is a list of python packages used to generate documentation. This file is used with pip:
+# This file is used with pip:
 # pip install --user -r requirements.txt
 #
 
+# Telemetry
 simplejson
 cbpro
 python-binance
@@ -9,3 +10,8 @@ pandas
 bta-lib
 click
 pymongo
+
+# Tensor Trade
+tensortrade
+ray==0.8.7
+symfit

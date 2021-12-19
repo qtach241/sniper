@@ -2,6 +2,7 @@ import time
 import datetime as dt
 import simplejson as json
 import pandas
+from pymongo import MongoClient
 from auth_keys import (api_secret, api_key, api_pass)
 
 from binance_level2_order_book import Bi_L2OrderBook
@@ -10,6 +11,9 @@ from cbpro_level2_order_book import Cb_L2OrderBook
 import matplotlib.pyplot as plt
 from matplotlib import animation
 
+VERSION_STRING = '1.0'
+
+KEY_VERSION = 'v'
 KEY_TIMESTAMP = 't'
 
 KEY_EXCHANGE_COINBASE = 'cb'
@@ -23,7 +27,7 @@ KEY_TRADING_PAIR_ETH_USD = 'ETH'
 KEY_TRADING_PAIR_SOL_USD = 'SOL'
 KEY_TRADING_PAIR_MATIC_USD = 'MATIC'
 
-KEY_LAST_UPDATE_AT = 't'
+KEY_LAST_UPDATE_AT = 'u'
 KEY_BID = 'b'
 KEY_ASK = 'a'
 KEY_BID_DEPTH = 'bd'
@@ -31,6 +35,10 @@ KEY_ASK_DEPTH = 'ad'
 
 if __name__ == '__main__':
     print("Started global order book at: ", dt.datetime.now())
+
+    mongo_client = MongoClient('mongodb://localhost:27017/')
+    db = mongo_client['sniper-db']
+    collection = db.telemetry
     
     # Start Coinbase L2 order books.
     Coinbase_BTC_USD = Cb_L2OrderBook(product_id='BTC-USD')
@@ -102,6 +110,7 @@ if __name__ == '__main__':
     #ani = animation.FuncAnimation(fig, animate, fargs=(xs, ys), interval=5000)
     #plt.show()
 
+    samples = 0
     while True:
 
         current_time = dt.datetime.utcnow().isoformat()
@@ -114,6 +123,7 @@ if __name__ == '__main__':
         Binance_SOL_USDT_depth = Binance_SOL_USDT.export()
 
         data = {}
+        data[KEY_VERSION] = VERSION_STRING
         data[KEY_TIMESTAMP] = current_time
         
         cb_data = {}
@@ -178,8 +188,15 @@ if __name__ == '__main__':
         #print(bids_df)
         #print(asks_df)
 
-        json_data = json.dumps(data)
-        print(json_data)
+        #json_data = json.dumps(data)
+        #print(json_data)
+
+        # Insert into database
+        collection.insert_one(data)
+
+        # Increment sample count and display
+        samples += 1
+        print("Samples Recorded: ", samples, end='\r')
 
         time.sleep(1)
 
