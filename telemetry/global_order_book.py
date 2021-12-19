@@ -128,7 +128,6 @@ if __name__ == '__main__':
         Binance_SOL_USDT_depth = Binance_SOL_USDT.export()
 
         data = {}
-        data[KEY_VERSION] = VERSION_STRING
         
         cb_data = {}
         bi_data = {}
