@@ -1,6 +1,7 @@
 import time
 import datetime as dt
 import simplejson as json
+import uuid
 import pandas
 from pymongo import MongoClient
 from auth_keys import (api_secret, api_key, api_pass)
@@ -13,7 +14,10 @@ from matplotlib import animation
 
 VERSION_STRING = '1.0'
 
+KEY_METADATA = 'm'
 KEY_VERSION = 'v'
+KEY_SESSION_ID = 's'
+
 KEY_TIMESTAMP = 't'
 
 KEY_EXCHANGE_COINBASE = 'cb'
@@ -35,6 +39,9 @@ KEY_ASK_DEPTH = 'ad'
 
 if __name__ == '__main__':
     print("Started global order book at: ", dt.datetime.now())
+
+    session_id = uuid.uuid4().hex[0:6]
+    print("Session Id: ", session_id)
 
     mongo_client = MongoClient('mongodb://localhost:27017/')
     db = mongo_client['sniper-db']
@@ -192,17 +199,22 @@ if __name__ == '__main__':
         # This extra step rids the dict of non-compatible types.
         document = json.loads(json_data)
 
+        # Insert the document metadata:
+        metadata = {}
+        metadata[KEY_VERSION] = VERSION_STRING
+        metadata[KEY_SESSION_ID] = session_id
+        document[KEY_METADATA] = metadata
+
         # The timestamp is the last thing to be added so it more accurately
         # reflects the log time.
         document[KEY_TIMESTAMP] = dt.datetime.utcnow()
-        print("Last sample recorded at: ", document['t'], end='\r')
 
         # Insert into database
         collection.insert_one(document)
 
         # Increment sample count and display
         samples += 1
-        print("Samples Recorded: ", samples, end='\r')
+        print(f"Last Sample: {document['t']}, Total Samples: {samples}", end='\r')
 
         # Account for roughly 0.2 seconds processing time.
         time.sleep(0.8)
