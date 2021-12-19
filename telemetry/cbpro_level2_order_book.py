@@ -43,7 +43,7 @@ class Cb_L2OrderBook(cbpro.WebsocketClient, L2OrderBook):
         for change in message['changes']:
             side = change[0]
             price = Decimal(change[1])
-            size = Decimal(change[2]) 
+            size = Decimal(change[2])
             if side == 'buy':
                 if size <= 0:
                     self._bids.pop(price, default=0)

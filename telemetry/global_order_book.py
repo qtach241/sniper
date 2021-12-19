@@ -113,8 +113,6 @@ if __name__ == '__main__':
     samples = 0
     while True:
 
-        current_time = dt.datetime.utcnow().isoformat()
-
         Coinbase_BTC_USD_depth = Coinbase_BTC_USD.export()
         Coinbase_ETH_USD_depth = Coinbase_ETH_USD.export()
         Coinbase_SOL_USD_depth = Coinbase_SOL_USD.export()
@@ -124,7 +122,6 @@ if __name__ == '__main__':
 
         data = {}
         data[KEY_VERSION] = VERSION_STRING
-        data[KEY_TIMESTAMP] = current_time
         
         cb_data = {}
         bi_data = {}
@@ -188,15 +185,25 @@ if __name__ == '__main__':
         #print(bids_df)
         #print(asks_df)
 
-        #json_data = json.dumps(data)
-        #print(json_data)
+        # Convert the python dict into json string.
+        json_data = json.dumps(data)
+
+        # Now convert it back to a python dict for insertion into mongo-db.
+        # This extra step rids the dict of non-compatible types.
+        document = json.loads(json_data)
+
+        # The timestamp is the last thing to be added so it more accurately
+        # reflects the log time.
+        document[KEY_TIMESTAMP] = dt.datetime.utcnow()
+        print("Last sample recorded at: ", document['t'], end='\r')
 
         # Insert into database
-        collection.insert_one(data)
+        collection.insert_one(document)
 
         # Increment sample count and display
         samples += 1
         print("Samples Recorded: ", samples, end='\r')
 
-        time.sleep(1)
+        # Account for roughly 0.2 seconds processing time.
+        time.sleep(0.8)
 
