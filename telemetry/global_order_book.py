@@ -31,6 +31,7 @@ KEY_TIMESTAMP = 't'
 
 KEY_EXCHANGE_COINBASE = 'cb'
 KEY_EXCHANGE_BINANCE = 'bi'
+KEY_EXCHANGE_BINANCEUS = 'bu'
 
 # The base currency is used to identify the trading pair. The quote
 # currency can always be assumed to be USD or equivalent (ie. USDT)
@@ -75,6 +76,10 @@ if __name__ == '__main__':
     time.sleep(2)
 
     # Start Binance L2 order books.
+    # Binance currently leads all crypto exchanges in volume, thus its order
+    # book must be taken into account when making trades. Binance is currently
+    # not available in the US however, so actual trades must be performed on
+    # either Coinbase or Binance.US
     # NOTE: As of 12/18/21 Binance API truncates initial snapshot. Therefore,
     # these order books are not 100% accurate, but will become more accurate
     # over time.
@@ -93,6 +98,16 @@ if __name__ == '__main__':
 
     print("Subscribing to Binance SOLUSDT...")
     Binance_SOL_USDT.create()
+    time.sleep(2)
+
+    # Start Binance.US order books.
+    # NOTE: Binance.US has lower fees than Coinbase but has significantly lower
+    # volume and a deficient API. Optimal strategy may be to perform trades on
+    # Binance.US, while using Coinbase's API and order book as a real-time proxy.
+    BinanceUS_SOL_USD = Bi_L2OrderBook(symbol='SOLUSD', tld='us')
+    
+    print("Subscribing to Binance.US SOLUSD...")
+    BinanceUS_SOL_USD.create()
     time.sleep(2)
 
     # Setup data visualizations
@@ -135,11 +150,13 @@ if __name__ == '__main__':
         Binance_BTC_USDT_depth = Binance_BTC_USDT.export()
         Binance_ETH_USDT_depth = Binance_ETH_USDT.export()
         Binance_SOL_USDT_depth = Binance_SOL_USDT.export()
+        BinanceUS_SOL_USD_depth = BinanceUS_SOL_USD.export()
 
         data = {}
         
         cb_data = {}
         bi_data = {}
+        bu_data = {}
 
         cb_btc_usd_data = {}
         cb_btc_usd_data[KEY_LAST_UPDATE_AT] = Coinbase_BTC_USD.get_update_time()
@@ -183,15 +200,24 @@ if __name__ == '__main__':
         bi_sol_usdt_data[KEY_BID_DEPTH] = Binance_SOL_USDT_depth[1].to_dict()
         bi_sol_usdt_data[KEY_ASK_DEPTH] = Binance_SOL_USDT_depth[0].to_dict()
 
+        bu_sol_usd_data = {}
+        bu_sol_usd_data[KEY_LAST_UPDATE_AT] = BinanceUS_SOL_USD.get_update_time()
+        bu_sol_usd_data[KEY_BID] = BinanceUS_SOL_USD.get_bid()
+        bu_sol_usd_data[KEY_ASK] = BinanceUS_SOL_USD.get_ask()
+        bu_sol_usd_data[KEY_BID_DEPTH] = BinanceUS_SOL_USD_depth[1].to_dict()
+        bu_sol_usd_data[KEY_ASK_DEPTH] = BinanceUS_SOL_USD_depth[0].to_dict()
+
         cb_data[KEY_TRADING_PAIR_BTC_USD] = cb_btc_usd_data
         cb_data[KEY_TRADING_PAIR_ETH_USD] = cb_eth_usd_data
         cb_data[KEY_TRADING_PAIR_SOL_USD] = cb_sol_usd_data
         bi_data[KEY_TRADING_PAIR_BTC_USD] = bi_btc_usdt_data
         bi_data[KEY_TRADING_PAIR_ETH_USD] = bi_eth_usdt_data
         bi_data[KEY_TRADING_PAIR_SOL_USD] = bi_sol_usdt_data
+        bu_data[KEY_TRADING_PAIR_SOL_USD] = bu_sol_usd_data
 
         data[KEY_EXCHANGE_COINBASE] = cb_data
         data[KEY_EXCHANGE_BINANCE] = bi_data
+        data[KEY_EXCHANGE_BINANCEUS] = bu_data
 
         #bids_df = pandas.DataFrame.from_dict(cb_sol_usd_data[KEY_BID_DEPTH])
         #asks_df = pandas.DataFrame.from_dict(cb_sol_usd_data[KEY_ASK_DEPTH])

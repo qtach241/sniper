@@ -11,8 +11,9 @@ from base_level2_order_book import L2OrderBook
 from auth_keys import (binance_api_secret, binance_api_key)
 
 class Bi_L2OrderBook(L2OrderBook):
-    def __init__(self, symbol='BNBBTC', interval=100, log_to=None):
+    def __init__(self, symbol='BNBBTC', tld='com', interval=100, log_to=None):
         self._symbol = symbol
+        self._tld = tld
         self._interval = interval
         self._queue = queue.Queue()
 
@@ -138,7 +139,7 @@ class Bi_L2OrderBook(L2OrderBook):
 
     # Implement base_level2_order_book interface:
     def create(self):
-        self._twm = ThreadedWebsocketManager(binance_api_key, binance_api_secret)
+        self._twm = ThreadedWebsocketManager(binance_api_key, binance_api_secret, tld=self._tld)
         self._twm.start()
 
         # Start listening to the diff. depth stream. On message handler will queue received
@@ -157,7 +158,7 @@ class Bi_L2OrderBook(L2OrderBook):
         # the full level 2 order book snapshot. Essentially, the local book is NEVER in sync with the
         # server book, although over time, the local book should get closer.
         # See: https://issueexplorer.com/issue/bmoscon/cryptofeed/604
-        self._client = Client(binance_api_key, binance_api_secret)
+        self._client = Client(binance_api_key, binance_api_secret, tld=self._tld)
         depth = self._client.get_order_book(symbol=self._symbol, limit=5000)
         self.apply_snapshot(depth)
 
