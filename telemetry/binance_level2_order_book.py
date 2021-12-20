@@ -1,4 +1,5 @@
 import time
+import datetime as dt
 import threading
 import queue
 import pandas
@@ -184,6 +185,15 @@ class Bi_L2OrderBook(L2OrderBook):
     def export(self):
         return self.export_grouped_snapshot()
 
+    def check_uptime(self, time_now):
+        # Convert the stored update time to datetime format for comparison.
+        dt_update_time = dt.datetime.utcfromtimestamp(int(self._update_time)//1000)
+        dt_delta = time_now - dt_update_time
+        # If the last event update time is stale by more than 10 seconds, attempt restarting order book.
+        if dt_delta.total_seconds() > 10:
+            print(f"WARNING: Binance {self._symbol} last updated: {dt_update_time} vs current time: {time_now} (delta: {dt_delta}). Attempting reset.")
+            self.destroy()
+            self.create()
 
 if __name__ == '__main__':
     bn_order_book = Bi_L2OrderBook(symbol="SOLUSDT")

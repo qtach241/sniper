@@ -241,7 +241,8 @@ if __name__ == '__main__':
 
         # The timestamp is the last thing to be added so it more accurately
         # reflects the log time.
-        document[KEY_TIMESTAMP] = dt.datetime.utcnow()
+        timestamp = dt.datetime.utcnow()
+        document[KEY_TIMESTAMP] = timestamp
 
         # Insert into database
         collection.insert_one(document)
@@ -250,6 +251,14 @@ if __name__ == '__main__':
         samples += 1
         print(f"Last Sample: {document['t']}, Total Samples: {samples}", end='\r')
 
+        # Check each order book uptime and attempt resync if needed.
+        Coinbase_BTC_USD.check_uptime(timestamp)
+        Coinbase_ETH_USD.check_uptime(timestamp)
+        Coinbase_SOL_USD.check_uptime(timestamp)
+        Binance_BTC_USDT.check_uptime(timestamp)
+        Binance_ETH_USDT.check_uptime(timestamp)
+        Binance_SOL_USDT.check_uptime(timestamp)
+        BinanceUS_SOL_USD.check_uptime(timestamp)
+
         # Account for roughly 0.2 seconds processing time.
         time.sleep(0.8)
-

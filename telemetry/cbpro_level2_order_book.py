@@ -123,3 +123,16 @@ class Cb_L2OrderBook(cbpro.WebsocketClient, L2OrderBook):
 
     def export(self):
         return self.export_grouped_snapshot()
+
+    def check_uptime(self, time_now):
+        # Convert the stored update time to datetime format for comparison.
+        # For Cbpro order books, update time is stored as an ISO string with trailing Z notation
+        # which python doesn't like for some reason so remove it.
+        dt_update_time_iso = self._update_time[:-1]
+        dt_update_time = dt.datetime.fromisoformat(dt_update_time_iso)
+        dt_delta = time_now - dt_update_time
+        # If the last event update time is stale by more than 10 seconds, attempt restarting order book.
+        if dt_delta.total_seconds() > 10:
+            print(f"WARNING: Cbpro {self.product_id} last updated: {dt_update_time} vs current time: {time_now} (delta: {dt_delta}). Attempting reset.")
+            self.destroy()
+            self.create()

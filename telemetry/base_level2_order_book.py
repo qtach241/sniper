@@ -49,3 +49,7 @@ class L2OrderBook(ABC):
     @abstractmethod
     def export(self):
         pass
+
+    @abstractmethod
+    def check_uptime(self, time_now):
+        pass
