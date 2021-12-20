@@ -24,6 +24,10 @@ class Bi_L2OrderBook(L2OrderBook):
 
         self._run_worker = False
 
+        self._client = Client(binance_api_key, binance_api_secret, tld=self._tld)
+        self._twm = ThreadedWebsocketManager(binance_api_key, binance_api_secret, tld=self._tld)
+        self._twm.start()
+
     @property
     def product_id(self):
         """Order Book only supports a single product currently."""
@@ -141,9 +145,6 @@ class Bi_L2OrderBook(L2OrderBook):
 
     # Implement base_level2_order_book interface:
     def create(self):
-        self._twm = ThreadedWebsocketManager(binance_api_key, binance_api_secret, tld=self._tld)
-        self._twm.start()
-
         # Start listening to the diff. depth stream. On message handler will queue received
         # messages for processing later.
         self._ds = self._twm.start_depth_socket(callback=self.on_message,
@@ -160,7 +161,6 @@ class Bi_L2OrderBook(L2OrderBook):
         # the full level 2 order book snapshot. Essentially, the local book is NEVER in sync with the
         # server book, although over time, the local book should get closer.
         # See: https://issueexplorer.com/issue/bmoscon/cryptofeed/604
-        self._client = Client(binance_api_key, binance_api_secret, tld=self._tld)
         depth = self._client.get_order_book(symbol=self._symbol, limit=5000)
         self.apply_snapshot(depth)
 
