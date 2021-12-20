@@ -22,6 +22,8 @@ class Bi_L2OrderBook(L2OrderBook):
         self._bids = SortedDict()
         self._update_time = None
 
+        self._run_worker = False
+
     @property
     def product_id(self):
         """Order Book only supports a single product currently."""
@@ -38,7 +40,7 @@ class Bi_L2OrderBook(L2OrderBook):
 
     def worker(self):
         prev_final_id = 0
-        while True:
+        while self._run_worker == True:
             msg = self._queue.get()
             #print(f"Dequeue. Size: {self._queue.qsize()}, U:{msg['U']}, u:{msg['u']}")
             if msg['u'] <= self._snapshot_id:
@@ -164,10 +166,17 @@ class Bi_L2OrderBook(L2OrderBook):
 
         # After the initial snapshot is done processing, turn on worker thread to begin
         # replaying buffered messages.
-        threading.Thread(target=self.worker, daemon=True).start()
+        self._run_worker = True
+        self._worker_thread = threading.Thread(target=self.worker, daemon=True).start()
 
     def destroy(self):
+        # First bring down the worker thread processing buffered messages.
+        self._run_worker = False
+        self._worker_thread.join()
+        # Call stop socket on depth socket.
         self._twm.stop_socket(self._ds)
+        # Clearing the queue not required because of update time check.
+        #self._queue.clear()
 
     def get_update_time(self):
         return self._update_time
