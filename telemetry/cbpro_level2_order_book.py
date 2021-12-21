@@ -1,5 +1,7 @@
 import json
 import time
+import queue
+import threading
 import datetime as dt
 import cbpro
 from decimal import Decimal
@@ -14,6 +16,9 @@ class Cb_L2OrderBook(cbpro.WebsocketClient, L2OrderBook):
         self._asks = SortedDict()
         self._bids = SortedDict()
         self._update_time = None
+        self._queue = queue.Queue()
+
+        self._run_worker = False
 
     @property
     def product_id(self):
@@ -60,16 +65,23 @@ class Cb_L2OrderBook(cbpro.WebsocketClient, L2OrderBook):
                     #print(f"Ask price level {price} updated to size {size}")
 
     def on_message(self, message):
-        msg_type = message['type']
-        if msg_type == 'subscription':
-            pass
-        elif msg_type == 'snapshot':
-            self.apply_snapshot(message)
-            #pprint.pprint(self._asks.items())
-            #pprint.pprint(self._bids.items())
-        elif msg_type == 'l2update':
-            self.apply_update(message)
-            #print(f"bid: {self.get_bid()}, ask: {self.get_ask()}, spread: {self.get_spread()}, price: {self.get_mid_market_price()}")
+        self._queue.put(message)
+
+    def worker(self):
+        # Coinbase's websocket API actually guarantees sequential delivery of messages
+        # on the level2 channel. Thus, no need to check sequence id, or event times here.
+        while self._run_worker == True:
+            message = self._queue.get()
+            msg_type = message['type']
+            if msg_type == 'subscription':
+                pass
+            elif msg_type == 'snapshot':
+                self.apply_snapshot(message)
+                #pprint.pprint(self._asks.items())
+                #pprint.pprint(self._bids.items())
+            elif msg_type == 'l2update':
+                self.apply_update(message)
+                #print(f"bid: {self.get_bid()}, ask: {self.get_ask()}, spread: {self.get_spread()}, price: {self.get_mid_market_price()}")
 
     def get_ask(self):
         return self._asks.peekitem(0)[0]
@@ -114,9 +126,13 @@ class Cb_L2OrderBook(cbpro.WebsocketClient, L2OrderBook):
     # Implement base_level2_order_book interface:
     def create(self):
         super(Cb_L2OrderBook, self).start()
+        self._run_worker = True
+        self._worker_thread = threading.Thread(target=self.worker, daemon=True).start()
 
     def destroy(self):
         super(Cb_L2OrderBook, self).close()
+        self._run_worker = False
+        self._worker_thread.join()
 
     def get_update_time(self):
         return self._update_time
