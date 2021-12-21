@@ -24,6 +24,7 @@ class Bi_L2OrderBook(L2OrderBook):
         self._update_time = None
 
         self._run_worker = False
+        self._lock = threading.Lock()
 
         self._client = Client(binance_api_key, binance_api_secret, tld=self._tld)
         self._twm = ThreadedWebsocketManager(binance_api_key, binance_api_secret, tld=self._tld)
@@ -61,7 +62,8 @@ class Bi_L2OrderBook(L2OrderBook):
                 print(f"Event gap detected! Expected: {prev_final_id+1} Actual: {msg['U']}")
 
             prev_final_id = msg['u']
-            self.apply_update(msg)
+            with self._lock:
+                self.apply_update(msg)
 
     def apply_snapshot(self, message):
         self._snapshot_id = message['lastUpdateId']
@@ -142,7 +144,7 @@ class Bi_L2OrderBook(L2OrderBook):
         grouped_asks = raw[0].groupby('price_bins', as_index=True).agg({'size': 'sum'})
         grouped_bids = raw[1].groupby('price_bins', as_index=True).agg({'size': 'sum'})
 
-        return (grouped_asks, grouped_bids)
+        return (grouped_asks, grouped_bids, ask, bid)
 
     # Implement base_level2_order_book interface:
     def create(self):
@@ -183,7 +185,8 @@ class Bi_L2OrderBook(L2OrderBook):
         return self._update_time
 
     def export(self):
-        return self.export_grouped_snapshot()
+        with self._lock:
+            return self.export_grouped_snapshot()
 
     def check_uptime(self, time_now):
         # Convert the stored update time to datetime format for comparison.

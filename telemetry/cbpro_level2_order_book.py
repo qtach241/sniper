@@ -19,6 +19,7 @@ class Cb_L2OrderBook(cbpro.WebsocketClient, L2OrderBook):
         self._queue = queue.Queue()
 
         self._run_worker = False
+        self._lock = threading.Lock()
 
     @property
     def product_id(self):
@@ -38,8 +39,7 @@ class Cb_L2OrderBook(cbpro.WebsocketClient, L2OrderBook):
             self._asks[price] = size
 
     def apply_update(self, message):
-        # TODO: Compare current time with "time" key and if too much slippage,
-        # re-subscribe to the feed and sync to the new snapshot.
+        # Log the event time to keep track of possible de-sync in check_uptime().
         self._update_time = message['time']
         if self.product_id != message['product_id']:
             print(f"Unexpected Product Id. Received: {message['product_id']}, Expected: {self.product_id}")
@@ -76,12 +76,14 @@ class Cb_L2OrderBook(cbpro.WebsocketClient, L2OrderBook):
             if msg_type == 'subscription':
                 pass
             elif msg_type == 'snapshot':
-                self.apply_snapshot(message)
-                #pprint.pprint(self._asks.items())
-                #pprint.pprint(self._bids.items())
+                with self._lock:
+                    self.apply_snapshot(message)
+                    #pprint.pprint(self._asks.items())
+                    #pprint.pprint(self._bids.items())
             elif msg_type == 'l2update':
-                self.apply_update(message)
-                #print(f"bid: {self.get_bid()}, ask: {self.get_ask()}, spread: {self.get_spread()}, price: {self.get_mid_market_price()}")
+                with self._lock:
+                    self.apply_update(message)
+                    #print(f"bid: {self.get_bid()}, ask: {self.get_ask()}, spread: {self.get_spread()}, price: {self.get_mid_market_price()}")
 
     def get_ask(self):
         return self._asks.peekitem(0)[0]
@@ -121,7 +123,7 @@ class Cb_L2OrderBook(cbpro.WebsocketClient, L2OrderBook):
         grouped_asks = raw[0].groupby('price_bins', as_index=True).agg({'size': 'sum'})
         grouped_bids = raw[1].groupby('price_bins', as_index=True).agg({'size': 'sum'})
 
-        return (grouped_asks, grouped_bids)
+        return (grouped_asks, grouped_bids, ask, bid)
 
     # Implement base_level2_order_book interface:
     def create(self):
@@ -138,7 +140,8 @@ class Cb_L2OrderBook(cbpro.WebsocketClient, L2OrderBook):
         return self._update_time
 
     def export(self):
-        return self.export_grouped_snapshot()
+        with self._lock:
+            return self.export_grouped_snapshot()
 
     def check_uptime(self, time_now):
         # Convert the stored update time to datetime format for comparison.

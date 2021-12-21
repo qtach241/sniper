@@ -160,50 +160,50 @@ if __name__ == '__main__':
 
         cb_btc_usd_data = {}
         cb_btc_usd_data[KEY_LAST_UPDATE_AT] = Coinbase_BTC_USD.get_update_time()
-        cb_btc_usd_data[KEY_BID] = Coinbase_BTC_USD.get_bid()
-        cb_btc_usd_data[KEY_ASK] = Coinbase_BTC_USD.get_ask()
+        cb_btc_usd_data[KEY_BID] = Coinbase_BTC_USD_depth[3]
+        cb_btc_usd_data[KEY_ASK] = Coinbase_BTC_USD_depth[2]
         cb_btc_usd_data[KEY_BID_DEPTH] = Coinbase_BTC_USD_depth[1].to_dict()
         cb_btc_usd_data[KEY_ASK_DEPTH] = Coinbase_BTC_USD_depth[0].to_dict()
 
         cb_eth_usd_data = {}
         cb_eth_usd_data[KEY_LAST_UPDATE_AT] = Coinbase_ETH_USD.get_update_time()
-        cb_eth_usd_data[KEY_BID] = Coinbase_ETH_USD.get_bid()
-        cb_eth_usd_data[KEY_ASK] = Coinbase_ETH_USD.get_ask()
+        cb_eth_usd_data[KEY_BID] = Coinbase_ETH_USD_depth[3]
+        cb_eth_usd_data[KEY_ASK] = Coinbase_ETH_USD_depth[2]
         cb_eth_usd_data[KEY_BID_DEPTH] = Coinbase_ETH_USD_depth[1].to_dict()
         cb_eth_usd_data[KEY_ASK_DEPTH] = Coinbase_ETH_USD_depth[0].to_dict()
 
         cb_sol_usd_data = {}
         cb_sol_usd_data[KEY_LAST_UPDATE_AT] = Coinbase_SOL_USD.get_update_time()
-        cb_sol_usd_data[KEY_BID] = Coinbase_SOL_USD.get_bid()
-        cb_sol_usd_data[KEY_ASK] = Coinbase_SOL_USD.get_ask()
+        cb_sol_usd_data[KEY_BID] = Coinbase_SOL_USD_depth[3]
+        cb_sol_usd_data[KEY_ASK] = Coinbase_SOL_USD_depth[2]
         cb_sol_usd_data[KEY_BID_DEPTH] = Coinbase_SOL_USD_depth[1].to_dict()
         cb_sol_usd_data[KEY_ASK_DEPTH] = Coinbase_SOL_USD_depth[0].to_dict()
 
         bi_btc_usdt_data = {}
         bi_btc_usdt_data[KEY_LAST_UPDATE_AT] = Binance_BTC_USDT.get_update_time()
-        bi_btc_usdt_data[KEY_BID] = Binance_BTC_USDT.get_bid()
-        bi_btc_usdt_data[KEY_ASK] = Binance_BTC_USDT.get_ask()
+        bi_btc_usdt_data[KEY_BID] = Binance_BTC_USDT_depth[3]
+        bi_btc_usdt_data[KEY_ASK] = Binance_BTC_USDT_depth[2]
         bi_btc_usdt_data[KEY_BID_DEPTH] = Binance_BTC_USDT_depth[1].to_dict()
         bi_btc_usdt_data[KEY_ASK_DEPTH] = Binance_BTC_USDT_depth[0].to_dict()
 
         bi_eth_usdt_data = {}
         bi_eth_usdt_data[KEY_LAST_UPDATE_AT] = Binance_ETH_USDT.get_update_time()
-        bi_eth_usdt_data[KEY_BID] = Binance_ETH_USDT.get_bid()
-        bi_eth_usdt_data[KEY_ASK] = Binance_ETH_USDT.get_ask()
+        bi_eth_usdt_data[KEY_BID] = Binance_ETH_USDT_depth[3]
+        bi_eth_usdt_data[KEY_ASK] = Binance_ETH_USDT_depth[2]
         bi_eth_usdt_data[KEY_BID_DEPTH] = Binance_ETH_USDT_depth[1].to_dict()
         bi_eth_usdt_data[KEY_ASK_DEPTH] = Binance_ETH_USDT_depth[0].to_dict()
 
         bi_sol_usdt_data = {}
         bi_sol_usdt_data[KEY_LAST_UPDATE_AT] = Binance_SOL_USDT.get_update_time()
-        bi_sol_usdt_data[KEY_BID] = Binance_SOL_USDT.get_bid()
-        bi_sol_usdt_data[KEY_ASK] = Binance_SOL_USDT.get_ask()
+        bi_sol_usdt_data[KEY_BID] = Binance_SOL_USDT_depth[3]
+        bi_sol_usdt_data[KEY_ASK] = Binance_SOL_USDT_depth[2]
         bi_sol_usdt_data[KEY_BID_DEPTH] = Binance_SOL_USDT_depth[1].to_dict()
         bi_sol_usdt_data[KEY_ASK_DEPTH] = Binance_SOL_USDT_depth[0].to_dict()
 
         bu_sol_usd_data = {}
         bu_sol_usd_data[KEY_LAST_UPDATE_AT] = BinanceUS_SOL_USD.get_update_time()
-        bu_sol_usd_data[KEY_BID] = BinanceUS_SOL_USD.get_bid()
-        bu_sol_usd_data[KEY_ASK] = BinanceUS_SOL_USD.get_ask()
+        bu_sol_usd_data[KEY_BID] = BinanceUS_SOL_USD_depth[3]
+        bu_sol_usd_data[KEY_ASK] = BinanceUS_SOL_USD_depth[2]
         bu_sol_usd_data[KEY_BID_DEPTH] = BinanceUS_SOL_USD_depth[1].to_dict()
         bu_sol_usd_data[KEY_ASK_DEPTH] = BinanceUS_SOL_USD_depth[0].to_dict()
 
