@@ -84,6 +84,9 @@ class Cb_L2OrderBook(cbpro.WebsocketClient, L2OrderBook):
                 with self._lock:
                     self.apply_update(message)
                     #print(f"bid: {self.get_bid()}, ask: {self.get_ask()}, spread: {self.get_spread()}, price: {self.get_mid_market_price()}")
+            elif msg_type == 'exit':
+                print(f"Cbpro {self.product_id} worker received exit message!")
+            self._queue.task_done()
 
     def get_ask(self):
         return self._asks.peekitem(0)[0]
@@ -133,8 +136,16 @@ class Cb_L2OrderBook(cbpro.WebsocketClient, L2OrderBook):
         self._worker_thread.start()
 
     def destroy(self):
+        # Bring down the producer first.
         super(Cb_L2OrderBook, self).close()
+        # Wait for any lingering messages to be processed. Ensures queue is drained before continuing.
+        self._queue.join()
+        # Mark the worker thread to stop running.
         self._run_worker = False
+        # Since we've ensured the queue is empty from the previous join(), the worker thread is currently
+        # blocking indefinitely on an empty queue. Here we'll use the poison pill technique to send one
+        # final "special" message to cause the worker thread to loop one final time, then exit.
+        self._queue.put({"type":"exit"})
         self._worker_thread.join()
 
     def get_update_time(self):

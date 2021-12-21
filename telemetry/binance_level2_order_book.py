@@ -36,34 +36,34 @@ class Bi_L2OrderBook(L2OrderBook):
         return self._symbol
 
     def on_message(self, message):
-        event_type = message['e']
-        if event_type == 'depthUpdate':
-            self._queue.put(message)
-            #print("msg: ", message)
-            #print(f"Enqueue. Size: {self._queue.qsize()}, U:{message['U']}, u:{message['u']}")
-        else:
-            print("on_message unrecognized event type: ", event_type)
+        self._queue.put(message)
 
     def worker(self):
         prev_final_id = 0
         while self._run_worker == True:
             msg = self._queue.get()
-            #print(f"Dequeue. Size: {self._queue.qsize()}, U:{msg['U']}, u:{msg['u']}")
-            if msg['u'] <= self._snapshot_id:
-                # Drop any event where 'u' (final update Id in event) is less than
-                # the snapshot Id.
-                print(f"Dropping old event {msg['u']} <= {self._snapshot_id}")
-                continue
+            event_type = msg['e']
+            if event_type == 'depthUpdate':
+                if msg['u'] <= self._snapshot_id:
+                    # Drop any event where 'u' (final update Id in event) is less than
+                    # the snapshot Id.
+                    print(f"Dropping old event {msg['u']} <= {self._snapshot_id}")
+                    self._queue.task_done()
+                    continue
 
-            if prev_final_id > 0 and msg['U'] != (prev_final_id+1):
-                # Each new event's 'U' (first update Id in event) should be equal to
-                # the previous event's 'u' + 1. If this is not the case, then we have
-                # an event gap and should resync the order book by taking a new snapshot.
-                print(f"Event gap detected! Expected: {prev_final_id+1} Actual: {msg['U']}")
+                if prev_final_id > 0 and msg['U'] != (prev_final_id+1):
+                    # Each new event's 'U' (first update Id in event) should be equal to
+                    # the previous event's 'u' + 1. If this is not the case, then we have
+                    # an event gap and should resync the order book by taking a new snapshot.
+                    print(f"Event gap detected! Expected: {prev_final_id+1} Actual: {msg['U']}")
 
-            prev_final_id = msg['u']
-            with self._lock:
-                self.apply_update(msg)
+                prev_final_id = msg['u']
+                with self._lock:
+                    self.apply_update(msg)
+
+            elif event_type == 'exit':
+                print(f"Binance {self.product_id} worker received exit message!")
+            self._queue.task_done()
 
     def apply_snapshot(self, message):
         self._snapshot_id = message['lastUpdateId']
@@ -174,11 +174,18 @@ class Bi_L2OrderBook(L2OrderBook):
         self._worker_thread.start()
 
     def destroy(self):
-        # First bring down the worker thread processing buffered messages.
-        self._run_worker = False
-        self._worker_thread.join()
-        # Call stop socket on depth socket.
+        # Bring down the producer first by calling stop socket on depth socket.
         self._twm.stop_socket(self._ds)
+        # Wait for any lingering messages to be processed. Ensures queue is drained before continuing.
+        self._queue.join()
+        # Mark the worker thread to stop running.
+        self._run_worker = False
+        # Since we've ensured the queue is empty from the previous join(), the worker thread is currently
+        # blocking indefinitely on an empty queue. Here we'll use the poison pill technique to send one
+        # final "special" message to cause the worker thread to loop one final time, then exit.
+        self._queue.put({"e":"exit"})
+        self._worker_thread.join()
+        
         # Clearing the queue not required because of update time check.
         #self._queue.clear()
 
