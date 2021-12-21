@@ -129,7 +129,8 @@ class Cb_L2OrderBook(cbpro.WebsocketClient, L2OrderBook):
     def create(self):
         super(Cb_L2OrderBook, self).start()
         self._run_worker = True
-        self._worker_thread = threading.Thread(target=self.worker, daemon=True).start()
+        self._worker_thread = threading.Thread(target=self.worker, daemon=True)
+        self._worker_thread.start()
 
     def destroy(self):
         super(Cb_L2OrderBook, self).close()

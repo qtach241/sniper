@@ -170,7 +170,8 @@ class Bi_L2OrderBook(L2OrderBook):
         # After the initial snapshot is done processing, turn on worker thread to begin
         # replaying buffered messages.
         self._run_worker = True
-        self._worker_thread = threading.Thread(target=self.worker, daemon=True).start()
+        self._worker_thread = threading.Thread(target=self.worker, daemon=True)
+        self._worker_thread.start()
 
     def destroy(self):
         # First bring down the worker thread processing buffered messages.
