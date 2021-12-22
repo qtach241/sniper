@@ -48,7 +48,7 @@ KEY_BID_DEPTH = 'bd'
 KEY_ASK_DEPTH = 'ad'
 
 if __name__ == '__main__':
-    print("Started global order book at: ", dt.datetime.now())
+    print("Started global order book at (UTC): ", dt.datetime.utcnow())
 
     session_id = uuid.uuid4().hex[0:6]
     print("Session Id: ", session_id)
