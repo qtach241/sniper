@@ -144,6 +144,8 @@ if __name__ == '__main__':
     samples = 0
     while True:
 
+        exec_time_start = time.time()
+
         Coinbase_BTC_USD_depth = Coinbase_BTC_USD.export()
         Coinbase_ETH_USD_depth = Coinbase_ETH_USD.export()
         Coinbase_SOL_USD_depth = Coinbase_SOL_USD.export()
@@ -260,5 +262,9 @@ if __name__ == '__main__':
         Binance_SOL_USDT.check_uptime(timestamp)
         BinanceUS_SOL_USD.check_uptime(timestamp)
 
-        # Account for roughly 0.2 seconds processing time.
-        time.sleep(0.8)
+        exec_time = time.time() - exec_time_start
+        if exec_time > 1:
+            print(f"WARNING: Last loop took over 1s to execute: {exec_time}")
+            time.sleep(0.1)
+        else:
+            time.sleep(1-exec_time)
