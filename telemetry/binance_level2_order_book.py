@@ -26,7 +26,6 @@ class Bi_L2OrderBook(L2OrderBook):
         self._run_worker = False
         self._lock = threading.Lock()
 
-        self._client = Client(binance_api_key, binance_api_secret, tld=self._tld)
         self._twm = ThreadedWebsocketManager(binance_api_key, binance_api_secret, tld=self._tld)
         self._twm.start()
 
@@ -164,7 +163,11 @@ class Bi_L2OrderBook(L2OrderBook):
         # the full level 2 order book snapshot. Essentially, the local book is NEVER in sync with the
         # server book, although over time, the local book should get closer.
         # See: https://issueexplorer.com/issue/bmoscon/cryptofeed/604
+        self._client = Client(binance_api_key, binance_api_secret, tld=self._tld)
         depth = self._client.get_order_book(symbol=self._symbol, limit=5000)
+        self._client.close_connection()
+
+        # Apply the initial snapshot to populate asks/bids.
         self.apply_snapshot(depth)
 
         # After the initial snapshot is done processing, turn on worker thread to begin
