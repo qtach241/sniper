@@ -89,11 +89,15 @@ class WebApiObserver(Observer):
             elif account['currency'] == 'SOL':
                 self._qty_crypto = float(account['balance'])
 
-        dtime = dt.datetime.fromisoformat(ticker['time'][:-1])
-        #print(dtime.timestamp())
-        #print(math.floor(dtime.timestamp()))
-        state = {'unix': math.floor(dtime.timestamp()), 'bid': float(ticker['bid']), 'ask': float(ticker['ask']), 'qty_usd': self._qty_usd, 'qty_crypto': self._qty_crypto, 'networth': self._qty_crypto*float(ticker['bid']) + self._qty_usd}
-        return pd.DataFrame(state, columns=DF_COLUMNS, index=[0])
+        dtf = dt.datetime.fromisoformat(ticker['time'][:-1])
+        return pd.DataFrame({
+            'unix': math.floor(dtf.timestamp()),
+            'bid': float(ticker['bid']),
+            'ask': float(ticker['ask']),
+            'qty_usd': self._qty_usd,
+            'qty_crypto': self._qty_crypto,
+            'networth': self._qty_crypto*float(ticker['bid']) + self._qty_usd
+            }, columns=DF_COLUMNS, index=[0])
 
 class TelemetryObserver(Observer):
     """
@@ -118,35 +122,35 @@ class TelemetryObserver(Observer):
         cursor = self._collection.find().sort("_id", -1).limit(1)
         # Fetch wallet state on-demand via REST API.
         accounts = self._auth_client.get_accounts()
-        #print(json.dumps(accounts, indent=4, sort_keys=True))
         for account in accounts:
             if account['currency'] == 'USD':
                 self._qty_usd = float(account['balance'])
             elif account['currency'] == 'SOL':
                 self._qty_crypto = float(account['balance'])
 
-        dtime = cursor[0]['t']
-        state = {'unix': math.floor(dtime.timestamp()), 'bid': cursor[0]['cb']['SOL']['b'], 'ask': cursor[0]['cb']['SOL']['a'], 'qty_usd': self._qty_usd, 'qty_crypto': self._qty_crypto, 'networth': self._qty_crypto*cursor[0]['cb']['SOL']['b'] + self._qty_usd}
-        return pd.DataFrame(state, columns=DF_COLUMNS, index=[0])
+        dtf = cursor[0]['t']
+        return pd.DataFrame({
+            'unix': math.floor(dtf.timestamp()), 
+            'bid': cursor[0]['cb']['SOL']['b'], 
+            'ask': cursor[0]['cb']['SOL']['a'], 
+            'qty_usd': self._qty_usd, 
+            'qty_crypto': self._qty_crypto, 
+            'networth': self._qty_crypto*cursor[0]['cb']['SOL']['b'] + self._qty_usd
+            }, columns=DF_COLUMNS, index=[0])
 
 if __name__ == '__main__':
-    # Test Csv Observer:
+    print("Test CsvObserver:")
     csv_obs = CsvObserver(filepath='csv/Coinbase_SOLUSD_data_sorted.csv', offset_minutes=0, spread=0.03)
-    csv_val = csv_obs.observe()
-    print(csv_val)
-    csv_val2 = csv_obs.observe()
-    print(csv_val2)
-    csv_val3 = csv_obs.observe()
-    print(csv_val3)
+    for x in range(1, 6):
+        csv_obs_ret = csv_obs.observe()
+        print(csv_obs_ret)
 
-    # Test WebApiObserver:
+    print("Test WebApiObserver:")
     web_obs = WebApiObserver(symbol='SOL')
     web_obs_ret = web_obs.observe()
     print(web_obs_ret)
 
-    # Test Telemetry Observer:
+    print("Test TelemetryObserver:")
     db_obs = TelemetryObserver()
     db_obs_ret = db_obs.observe()
     print(db_obs_ret)
-    #print("ask: ", db_obs_ret[0]['cb']['SOL']['a'])
-    #print("bid: ", db_obs_ret[0]['cb']['SOL']['b'])
