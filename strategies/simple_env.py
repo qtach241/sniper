@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from clock import Clock
 from simple_agent import Agent, DCA_Agent, DH_Agent, HODL_Agent, SmartDCA_Agent
-from simple_observer import Observer, CsvObserver, WebApiObserver, LiveMongoDbObserver
+from simple_observer import Observer, CsvObserver, WebApiObserver, TelemetryObserver
 
 import pandas as pd
 

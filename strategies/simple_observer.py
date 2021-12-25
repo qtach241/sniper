@@ -95,7 +95,13 @@ class WebApiObserver(Observer):
         state = {'unix': math.floor(dtime.timestamp()), 'bid': float(ticker['bid']), 'ask': float(ticker['ask']), 'qty_usd': self._qty_usd, 'qty_crypto': self._qty_crypto, 'networth': self._qty_crypto*float(ticker['bid']) + self._qty_usd}
         return pd.DataFrame(state, columns=DF_COLUMNS, index=[0])
 
-class LiveMongoDbObserver(Observer):
+class TelemetryObserver(Observer):
+    """
+    The Telemetry Observer reads ticker data from the telemetry Mongo DB
+    collection and wallet data from the Coinbase REST API. Telemetry data
+    stored in the Mongo DB collection has second precision unlike the Web 
+    API Observer.
+    """
     def __init__(self, symbol=DEFAULT_SYMBOL, url='mongodb://localhost:27017/', db='sniper-db', collection='telemetry'):
         super().__init__(symbol=symbol)
         
@@ -138,8 +144,8 @@ if __name__ == '__main__':
     web_obs_ret = web_obs.observe()
     print(web_obs_ret)
 
-    # Test Live MongoDb Observer:
-    db_obs = LiveMongoDbObserver()
+    # Test Telemetry Observer:
+    db_obs = TelemetryObserver()
     db_obs_ret = db_obs.observe()
     print(db_obs_ret)
     #print("ask: ", db_obs_ret[0]['cb']['SOL']['a'])
