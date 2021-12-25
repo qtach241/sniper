@@ -61,8 +61,14 @@ class CsvObserver(Observer):
         # Read the next candle from the CSV file formatted to a dataframe.
         df = next(self._obs_generator)
         # Format the data into a new dataframe to represent the observed state.
-        state = {'unix': df.iloc[0][0], 'bid': df.iloc[0][4]-self._spread, 'ask': df.iloc[0][4]+self._spread, 'qty_usd': None, 'qty_crypto': None, 'networth': None}
-        return pd.DataFrame(state, columns=DF_COLUMNS, index=[0])
+        return pd.DataFrame({
+            'unix': df.iloc[0][0], 
+            'bid': df.iloc[0][4] - self._spread, 
+            'ask': df.iloc[0][4] + self._spread, 
+            'qty_usd': None, 
+            'qty_crypto': None, 
+            'networth': None
+            }, columns=DF_COLUMNS, index=[0])
 
 class WebApiObserver(Observer):
     """
