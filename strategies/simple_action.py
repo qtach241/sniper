@@ -25,6 +25,18 @@ class Action(ABC):
     def simulate(self):
         pass
 
+class Action_Hold(Action):
+    def __init__(self, agent) -> None:
+        super().__init__(agent, id=ActionSpace.HOLD)
+    
+    def execute(self):
+        print("Executing HOLD action")
+        print(self._agent._df)
+
+    def simulate(self):
+        print("Simulating HOLD action")
+        print(self._agent._df)
+
 class Action_BuyAll(Action):
     def __init__(self, agent) -> None:
         super().__init__(agent, id=ActionSpace.MARKET_ORDER_BUY_ALL)

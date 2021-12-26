@@ -42,7 +42,7 @@ class SimulatedEnvironment():
     """
     Environments can be one of two types: Live or Simulated.
 
-    A simulated environment, unlike the live environmentt, can support multiple
+    A simulated environment, unlike the live environment, can support multiple
     agents. Agents operating in a simulated environment will not interact with a
     live API. As such, only a partial state is observed. The environment simulates
     the actions selected by the agent and "fills in" the rest of the state.
@@ -68,14 +68,15 @@ class SimulatedEnvironment():
         observation = self._obs.observe()
 
         # Additional feature processing
-        columns = ["unix", "bid", "ask", "qty_usd", "qty_crypto", "networth"]
+        #columns = ["unix", "bid", "ask", "qty_usd", "qty_crypto", "networth"]
 
         #df = pandas.DataFrame(historic_data, columns=historic_data_columns)
         #dataframe["5-Day Moving Average"] = dataframe.Close.rolling(5).mean() # Moving Average via Pandas
         #dataframe["10-Day Moving Average"] = btalib.sma(dataframe.Close, period=10).df # Moving Average via bta-lib
 
         for agent in self._agents:
-            action = agent.get_action(observation)
+            agent.update(observation)
+            action = agent.get_action()
             action.simulate()
 
         # Simulate the action
@@ -92,9 +93,9 @@ if __name__ == '__main__':
 
     agents = [
         HODL_Agent(),
-        DCA_Agent(),
-        DH_Agent(),
-        SmartDCA_Agent(),
+        #DCA_Agent(),
+        #DH_Agent(),
+        #SmartDCA_Agent(),
     ]
 
     for agent in agents:
@@ -103,5 +104,5 @@ if __name__ == '__main__':
     
     env.load_agents(agents)
 
-
-
+    for x in range(6):
+        env.step()

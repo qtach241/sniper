@@ -1,7 +1,7 @@
 import pandas as pd
 from abc import ABC, abstractmethod
 
-from simple_action import Action
+from simple_action import Action, Action_Hold, Action_BuyAll
 
 DF_COLUMNS = ["unix", "bid", "ask", "qty_usd", "qty_crypto", "networth"]
 
@@ -10,10 +10,14 @@ class Agent(ABC):
         self._initial_usd = initial_usd
         self._initial_crypto = initial_crypto
 
-        self._df = pd.DataFrame(columns=DF_COLUMNS) 
+        self._df = pd.DataFrame(columns=DF_COLUMNS)
+
+    @abstractmethod
+    def update(self, new) -> None:
+        self._df = self._df.append(new, ignore_index=True)
     
     @abstractmethod
-    def get_action(self, state) -> Action:
+    def get_action(self) -> Action:
         pass
 
     @abstractmethod
@@ -23,9 +27,16 @@ class Agent(ABC):
 class HODL_Agent(Agent):
     def __init__(self) -> None:
         super().__init__()
+
+    def update(self, new) -> None:
+        super().update(new)
     
-    def get_action(self, state) -> Action:
-        return super().get_action(state)
+    def get_action(self) -> Action:
+        last_qty_usd = self._df.iloc[-1]['qty_usd']
+        if last_qty_usd > 0:
+            return Action_BuyAll(agent=self)
+        else:
+            return Action_Hold(agent=self)
 
     def reset(self) -> None:
         return super().reset()
@@ -34,8 +45,8 @@ class DCA_Agent(Agent):
     def __init__(self) -> None:
         super().__init__()
     
-    def get_action(self, state) -> Action:
-        return super().get_action(state)
+    def get_action(self) -> Action:
+        pass
 
     def reset(self) -> None:
         return super().reset()
@@ -44,8 +55,8 @@ class DH_Agent(Agent):
     def __init__(self) -> None:
         super().__init__()
     
-    def get_action(self, state) -> Action:
-        return super().get_action(state)
+    def get_action(self) -> Action:
+        pass
 
     def reset(self) -> None:
         return super().reset()
@@ -54,8 +65,8 @@ class SmartDCA_Agent(Agent):
     def __init__(self) -> None:
         super().__init__()
     
-    def get_action(self, state) -> Action:
-        return super().get_action(state)
+    def get_action(self) -> Action:
+        pass
 
     def reset(self) -> None:
         return super().reset()
