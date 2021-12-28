@@ -92,7 +92,7 @@ class WebApiObserver(Observer):
         for account in accounts:
             if account['currency'] == 'USD':
                 self._qty_usd = float(account['balance'])
-            elif account['currency'] == 'SOL':
+            elif account['currency'] == self.symbol:
                 self._qty_crypto = float(account['balance'])
 
         dtf = dt.datetime.fromisoformat(ticker['time'][:-1])
@@ -131,7 +131,7 @@ class TelemetryObserver(Observer):
         for account in accounts:
             if account['currency'] == 'USD':
                 self._qty_usd = float(account['balance'])
-            elif account['currency'] == 'SOL':
+            elif account['currency'] == self.symbol:
                 self._qty_crypto = float(account['balance'])
 
         dtf = cursor[0]['t']
