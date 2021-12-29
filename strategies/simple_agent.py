@@ -13,8 +13,8 @@ class Agent(ABC):
         self._df = pd.DataFrame(columns=DF_COLUMNS)
 
     @abstractmethod
-    def update(self, new) -> None:
-        self._df = self._df.append(new, ignore_index=True)
+    def update(self, df) -> None:
+        self._df = self._df.append(df, ignore_index=True)
     
     @abstractmethod
     def get_action(self) -> Action:
@@ -28,8 +28,8 @@ class HODL_Agent(Agent):
     def __init__(self) -> None:
         super().__init__()
 
-    def update(self, new) -> None:
-        super().update(new)
+    def update(self, df) -> None:
+        super().update(df)
     
     def get_action(self) -> Action:
         last_qty_usd = self._df.iloc[-1]['qty_usd']

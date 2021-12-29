@@ -63,8 +63,8 @@ class CsvObserver(Observer):
         # Format the data into a new dataframe to represent the observed state.
         return pd.DataFrame({
             'unix': df.iloc[0][0], 
-            'bid': df.iloc[0][4] - self._spread, 
-            'ask': df.iloc[0][4] + self._spread, 
+            'bid': df.iloc[0][4] - self._spread/2, 
+            'ask': df.iloc[0][4] + self._spread/2, 
             'qty_usd': None, 
             'qty_crypto': None, 
             'networth': None

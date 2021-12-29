@@ -1,9 +1,10 @@
 import datetime as dt
 
 class Clock():
-    def __init__(self):
+    def __init__(self, time):
         self._start_time = 0
         self._current_time = 0
+        self.set_time(time)
 
     def set_time(self, time) -> None:
         if self._start_time == 0:
