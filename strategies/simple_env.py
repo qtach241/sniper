@@ -152,7 +152,11 @@ class SimulatedEnvironment(Environment):
         #df.to_csv(f'init_data.csv', index=False, header=True)
 
     def step(self):
+        # Get latest dataframe from observer.
         observation = self._obs.observe()
+
+        # Update clock with the latest unix timestamp (new obs should only contain 1 row)
+        self._clock.set_time(observation.iloc[-1]['unix'])
 
         # Additional feature processing
         #columns = ["unix", "bid", "ask", "qty_usd", "qty_crypto", "networth"]

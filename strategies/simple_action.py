@@ -46,7 +46,42 @@ class Action_BuyAll(Action):
         print(self._agent._df)
 
     def simulate(self):
-        # Check the current state, if QTY of USD is greater than 0, transfer
-        # all USD to the crypto asset at the current bid.
-        print("Executing BUY ALL action")
+        # Transfer all USD to the crypto asset (ie. BUY) at the current ask price.
+        print("Simulating BUY ALL action")
+        c_qty_usd = self._agent._df.at[self._agent._df.index[-1], 'qty_usd']
+        c_qty_ass = self._agent._df.at[self._agent._df.index[-1], 'qty_crypto']
+        c_bid = self._agent._df.at[self._agent._df.index[-1], 'bid']
+        c_ask = self._agent._df.at[self._agent._df.index[-1], 'ask']
+        
+        n_qty_usd = 0
+        n_qty_ass = c_qty_ass + (c_qty_usd/c_ask)
+
+        # Modify the last row in place with the new qty values
+        self._agent._df.at[self._agent._df.index[-1], 'qty_usd'] = n_qty_usd
+        self._agent._df.at[self._agent._df.index[-1], 'qty_crypto'] = n_qty_ass
+        self._agent._df.at[self._agent._df.index[-1], 'networth'] = n_qty_ass*c_bid
+        print(self._agent._df)
+
+class Action_SellAll(Action):
+    def __init__(self, agent) -> None:
+        super().__init__(agent, id=ActionSpace.MARKET_ORDER_SELL_ALL)
+
+    def execute(self):
+        print("Executing SELL ALL action")
+        print(self._agent._df)
+
+    def simulate(self):
+        # Transfer all crypto assets to USD (ie. SELL) at the current bid price.
+        print("Simulating SELL ALL action")
+        c_qty_usd = self._agent._df.at[self._agent._df.index[-1], 'qty_usd']
+        c_qty_ass = self._agent._df.at[self._agent._df.index[-1], 'qty_crypto']
+        c_bid = self._agent._df.at[self._agent._df.index[-1], 'bid']
+        
+        n_qty_usd = c_qty_usd + (c_qty_ass*c_bid)
+        n_qty_ass = 0
+
+        # Modify the last row in place with the new qty values
+        self._agent._df.at[self._agent._df.index[-1], 'qty_usd'] = n_qty_usd
+        self._agent._df.at[self._agent._df.index[-1], 'qty_crypto'] = n_qty_ass
+        self._agent._df.at[self._agent._df.index[-1], 'networth'] = n_qty_usd
         print(self._agent._df)

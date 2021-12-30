@@ -12,31 +12,40 @@ class Agent(ABC):
 
         self._df = pd.DataFrame(columns=DF_COLUMNS)
 
-    @abstractmethod
-    def update(self, df) -> None:
+    def update(self, df, qty_usd=None, qty_crypto=None) -> None:
         self._df = self._df.append(df, ignore_index=True)
-        # Fill in missing data if required.
-        if pd.isna(self._df.iloc[-1]['qty_usd']):
-            self._df.at[self._df.index[-1],'qty_usd'] = self._df.iloc[-2]['qty_usd']
-        if pd.isna(self._df.iloc[-1]['qty_crypto']):
-            self._df.at[self._df.index[-1],'qty_crypto'] = self._df.iloc[-2]['qty_crypto']
-        if pd.isna(self._df.iloc[-1]['networth']):
-            self._df.at[self._df.index[-1],'networth'] = self._df.iloc[-1]['qty_usd'] + (self._df.iloc[-1]['qty_crypto']*self._df.iloc[-1]['bid'])
+
+        if qty_usd == None or qty_crypto == None:
+            # If qty_usd or qty_crypto is not specified, then we either expect the dataframe
+            # to be a fully complete dataframe (from a live observer) or a partially complete
+            # dataframe from a play-back (ie. csv) observer, in which we'll need to "fill in"
+            # the missing NaN cells.
+            if pd.isna(self._df.iloc[-1]['qty_usd']):
+                self._df.at[self._df.index[-1],'qty_usd'] = self._df.iloc[-2]['qty_usd']
+            if pd.isna(self._df.iloc[-1]['qty_crypto']):
+                self._df.at[self._df.index[-1],'qty_crypto'] = self._df.iloc[-2]['qty_crypto']
+            if pd.isna(self._df.iloc[-1]['networth']):
+                self._df.at[self._df.index[-1],'networth'] = self._df.iloc[-1]['qty_usd'] + (self._df.iloc[-1]['qty_crypto']*self._df.iloc[-1]['bid'])
+        else:
+            # If BOTH qty_usd and qty_crypto are specified, then we are simulating these cells
+            # instead of fetching live data from the observer.
+            self.update_tail(qty_usd, qty_crypto)
+
+    def update_tail(self, qty_usd, qty_crypto) -> None:
+        self._df.at[self._df.index[-1], 'qty_usd'] = qty_usd
+        self._df.at[self._df.index[-1], 'qty_crypto'] = qty_crypto
+        self._df.at[self._df.index[-1], 'networth'] = qty_usd + (qty_crypto*self._df.iloc[-1]['bid'])
+    
+    def reset(self) -> None:
+        pass
     
     @abstractmethod
     def get_action(self) -> Action:
         pass
 
-    @abstractmethod
-    def reset(self) -> None:
-        pass
-
 class HODL_Agent(Agent):
     def __init__(self) -> None:
         super().__init__()
-
-    def update(self, df) -> None:
-        super().update(df)
     
     def get_action(self) -> Action:
         last_qty_usd = self._df.iloc[-1]['qty_usd']
