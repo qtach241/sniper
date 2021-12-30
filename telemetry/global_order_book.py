@@ -47,7 +47,7 @@ KEY_ASK = 'a'
 KEY_BID_DEPTH = 'bd'
 KEY_ASK_DEPTH = 'ad'
 
-if __name__ == '__main__':
+def main():
     print("Started global order book at (UTC): ", dt.datetime.utcnow())
 
     session_id = uuid.uuid4().hex[0:6]
@@ -268,3 +268,12 @@ if __name__ == '__main__':
             time.sleep(0.1)
         else:
             time.sleep(1-exec_time)
+
+if __name__ == '__main__':
+    while True:
+        try:
+            main()
+        except Exception as e:
+            print(f"[{dt.datetime.utcnow()}] Exception occured: {e}")
+            print("Attempting restart...")
+            continue
