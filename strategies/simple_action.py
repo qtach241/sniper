@@ -42,9 +42,11 @@ class Action_BuyAll(Action):
         super().__init__(agent, id=ActionSpace.MARKET_ORDER_BUY_ALL)
 
     def execute(self):
-        pass
+        print("Executing BUY ALL action")
+        print(self._agent._df)
 
     def simulate(self):
         # Check the current state, if QTY of USD is greater than 0, transfer
         # all USD to the crypto asset at the current bid.
-        pass
+        print("Executing BUY ALL action")
+        print(self._agent._df)

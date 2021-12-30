@@ -15,6 +15,13 @@ class Agent(ABC):
     @abstractmethod
     def update(self, df) -> None:
         self._df = self._df.append(df, ignore_index=True)
+        # Fill in missing data if required.
+        if pd.isna(self._df.iloc[-1]['qty_usd']):
+            self._df.at[self._df.index[-1],'qty_usd'] = self._df.iloc[-2]['qty_usd']
+        if pd.isna(self._df.iloc[-1]['qty_crypto']):
+            self._df.at[self._df.index[-1],'qty_crypto'] = self._df.iloc[-2]['qty_crypto']
+        if pd.isna(self._df.iloc[-1]['networth']):
+            self._df.at[self._df.index[-1],'networth'] = self._df.iloc[-1]['qty_usd'] + (self._df.iloc[-1]['qty_crypto']*self._df.iloc[-1]['bid'])
     
     @abstractmethod
     def get_action(self) -> Action:
