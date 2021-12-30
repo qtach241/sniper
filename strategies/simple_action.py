@@ -9,43 +9,65 @@ class ActionSpace(Enum):
     MARKET_ORDER_SELL_TENTH = 5
 
 class Action(ABC):
-    def __init__(self, agent, id) -> None:
+    def __init__(self, agent, id, cd) -> None:
         self._agent = agent
         self._id = id
+        self._cd = cd
+
+        self._start_time = 0
 
     @property
     def action_id(self) -> ActionSpace:
-        return id
+        return self._id
+
+    def time_til(self):
+        return self._start_time + self._cd - self._agent._clock.get_time()
+
+    def execute(self):
+        if self.time_til() <= 0:
+            self._start_time = self._agent._clock.get_time()
+            self.on_execute()
+        else:
+            print(f"Action {self.action_id} on CD for {self.time_til()} seconds!")
+            pass
+
+    def simulate(self):
+        if self.time_til() <= 0:
+            self._start_time = self._agent._clock.get_time()
+            self.on_simulate()
+        else:
+            print(f"Action {self.action_id} on CD for {self.time_til()} seconds!")
+            pass
 
     @abstractmethod
-    def execute(self):
+    def on_execute(self):
         pass
 
     @abstractmethod
-    def simulate(self):
+    def on_simulate(self):
         pass
 
 class Action_Hold(Action):
-    def __init__(self, agent) -> None:
-        super().__init__(agent, id=ActionSpace.HOLD)
+    def __init__(self, agent, cd) -> None:
+        super().__init__(agent, id=ActionSpace.HOLD, cd=cd)
     
-    def execute(self):
+    def on_execute(self):
         print("Executing HOLD action")
         print(self._agent._df)
 
-    def simulate(self):
+    def on_simulate(self):
         print("Simulating HOLD action")
         print(self._agent._df)
 
 class Action_BuyAll(Action):
-    def __init__(self, agent) -> None:
-        super().__init__(agent, id=ActionSpace.MARKET_ORDER_BUY_ALL)
+    def __init__(self, agent, cd) -> None:
+        super().__init__(agent, id=ActionSpace.MARKET_ORDER_BUY_ALL, cd=cd)
 
-    def execute(self):
+    def on_execute(self):
         print("Executing BUY ALL action")
         print(self._agent._df)
 
-    def simulate(self):
+    def on_simulate(self):
         # Transfer all USD to the crypto asset (ie. BUY) at the current ask price.
         print("Simulating BUY ALL action")
         c_qty_usd = self._agent._df.at[self._agent._df.index[-1], 'qty_usd']
@@ -63,14 +85,14 @@ class Action_BuyAll(Action):
         print(self._agent._df)
 
 class Action_SellAll(Action):
-    def __init__(self, agent) -> None:
-        super().__init__(agent, id=ActionSpace.MARKET_ORDER_SELL_ALL)
+    def __init__(self, agent, cd) -> None:
+        super().__init__(agent, id=ActionSpace.MARKET_ORDER_SELL_ALL, cd=cd)
 
-    def execute(self):
+    def on_execute(self):
         print("Executing SELL ALL action")
         print(self._agent._df)
 
-    def simulate(self):
+    def on_simulate(self):
         # Transfer all crypto assets to USD (ie. SELL) at the current bid price.
         print("Simulating SELL ALL action")
         c_qty_usd = self._agent._df.at[self._agent._df.index[-1], 'qty_usd']

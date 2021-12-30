@@ -108,6 +108,7 @@ class SimulatedEnvironment(Environment):
     def load_agents(self, agents):
         for agent in agents:
             if (isinstance(agent, Agent)):
+                agent.set_clock(self._clock)
                 self._agents.append(agent)
             else:
                 print("ERROR: Cannot load object not of type Agent!")

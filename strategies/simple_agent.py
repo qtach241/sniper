@@ -3,14 +3,22 @@ from abc import ABC, abstractmethod
 
 from simple_action import Action, Action_Hold, Action_BuyAll
 
+CD_NONE = 0
+CD_ONE_HOUR = 3600
+CD_SIX_HOUR = 21600
+CD_ONE_DAY = 86400
+
 DF_COLUMNS = ["unix", "bid", "ask", "qty_usd", "qty_crypto", "networth"]
 
 class Agent(ABC):
-    def __init__(self, initial_usd=0, initial_crypto=0) -> None:
-        self._initial_usd = initial_usd
-        self._initial_crypto = initial_crypto
-
+    def __init__(self) -> None:
         self._df = pd.DataFrame(columns=DF_COLUMNS)
+        self._clock = None
+
+        self._action_list = []
+
+    def set_clock(self, obj) -> None:
+        self._clock = obj
 
     def update(self, df, qty_usd=None, qty_crypto=None) -> None:
         self._df = self._df.append(df, ignore_index=True)
@@ -46,13 +54,20 @@ class Agent(ABC):
 class HODL_Agent(Agent):
     def __init__(self) -> None:
         super().__init__()
+        action_list = [
+            Action_Hold(agent=self, cd=CD_NONE),
+            Action_BuyAll(agent=self, cd=CD_SIX_HOUR)
+        ]
+        self._action_list = action_list
+        #self._action_list.append(Action_Hold(agent=self, cd=CD_ONE_HOUR))
+        #self._action_list.append(Action_BuyAll(agent=self, cd=CD_SIX_HOUR))
     
     def get_action(self) -> Action:
         last_qty_usd = self._df.iloc[-1]['qty_usd']
         if last_qty_usd > 0:
-            return Action_BuyAll(agent=self)
+            return self._action_list[1] # Buy All
         else:
-            return Action_Hold(agent=self)
+            return self._action_list[0] # Hold
 
     def reset(self) -> None:
         return super().reset()
