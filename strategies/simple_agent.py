@@ -1,7 +1,7 @@
 import pandas as pd
 from abc import ABC, abstractmethod
 
-from simple_action import Action, Action_Hold, Action_BuyAll
+from simple_action import Action, Action_Hold, Action_BuyAll, Action_Buy100, Action_Sell100
 
 CD_NONE = 0
 CD_ONE_HOUR = 3600
@@ -14,11 +14,13 @@ class Agent(ABC):
     def __init__(self) -> None:
         self._df = pd.DataFrame(columns=DF_COLUMNS)
         self._clock = None
-
         self._action_list = []
 
     def set_clock(self, obj) -> None:
         self._clock = obj
+
+    def set_action_list(self, action_list) -> None:
+        self._action_list = action_list
 
     def update(self, df, qty_usd=None, qty_crypto=None) -> None:
         self._df = self._df.append(df, ignore_index=True)
@@ -58,9 +60,7 @@ class HODL_Agent(Agent):
             Action_Hold(agent=self, cd=CD_NONE),
             Action_BuyAll(agent=self, cd=CD_SIX_HOUR)
         ]
-        self._action_list = action_list
-        #self._action_list.append(Action_Hold(agent=self, cd=CD_ONE_HOUR))
-        #self._action_list.append(Action_BuyAll(agent=self, cd=CD_SIX_HOUR))
+        self.set_action_list(action_list)
     
     def get_action(self) -> Action:
         last_qty_usd = self._df.iloc[-1]['qty_usd']
@@ -72,32 +72,40 @@ class HODL_Agent(Agent):
     def reset(self) -> None:
         return super().reset()
 
-class DCA_Agent(Agent):
+class Test_Agent(Agent):
     def __init__(self) -> None:
         super().__init__()
+        action_list = [
+            Action_Hold(agent=self, cd=CD_NONE),
+            Action_Buy100(agent=self, cd=CD_SIX_HOUR),
+            Action_Sell100(agent=self, cd=CD_SIX_HOUR)
+        ]
+        self.set_action_list(action_list)
     
     def get_action(self) -> Action:
-        pass
+        bid = self._df.iloc[-1]['bid']
+        ask = self._df.iloc[-1]['ask']
+        last_qty_usd = self._df.iloc[-1]['qty_usd']
+        last_qty_ass = self._df.iloc[-1]['qty_crypto']
+        if ask < 160 and last_qty_usd > 0:
+            return self._action_list[1] # Buy 100
+        elif bid > 200 and last_qty_ass > 0:
+            return self._action_list[2] # Sell 100
+        else:
+            return self._action_list[0] # Hold
 
     def reset(self) -> None:
         return super().reset()
 
-class DH_Agent(Agent):
+class Bollinger_Agent(Agent):
     def __init__(self) -> None:
         super().__init__()
-    
+        action_list = [
+            Action_Hold(agent=self, cd=CD_NONE),
+            Action_Buy100(agent=self, cd=CD_SIX_HOUR),
+            Action_Sell100(agent=self, cd=CD_SIX_HOUR)
+        ]
+        self.set_action_list(action_list)
+
     def get_action(self) -> Action:
         pass
-
-    def reset(self) -> None:
-        return super().reset()
-
-class SmartDCA_Agent(Agent):
-    def __init__(self) -> None:
-        super().__init__()
-    
-    def get_action(self) -> Action:
-        pass
-
-    def reset(self) -> None:
-        return super().reset()

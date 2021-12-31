@@ -1,22 +1,30 @@
 import datetime as dt
 
-class Clock():
-    def __init__(self, time):
-        self._start_time = 0
-        self._current_time = 0
-        self.set_time(time)
+DEFAULT_EPOCH = 3
+DEFAULT_TIME_END = 9999999999
 
-    def reset(self) -> None:
-        self._start_time = 0
+class Clock():
+    def __init__(self, start, end=9999999999, epoch=DEFAULT_EPOCH):
+        self._epoch = epoch*24*60*60 # Convert days to seconds.
+        self._epoch_start = 0
+
         self._current_time = 0
+        self._end_time = end
+        self.set_time(start)
+
+    def reset_epoch(self) -> None:
+        self._epoch_start = 0
 
     def set_time(self, time) -> None:
-        if self._start_time == 0:
-            self._start_time = time
+        if self._epoch_start == 0:
+            self._epoch_start = time
         self._current_time = time
 
     def get_time(self):
         return self._current_time
 
-    def get_elapsed_time(self) -> dt.timedelta:
-        return self._current_time - self._start_time
+    def time_til_epoch(self):
+        return self._epoch_start + self._epoch - self._current_time
+
+    def time_til_end(self):
+        return self._end_time - self._current_time

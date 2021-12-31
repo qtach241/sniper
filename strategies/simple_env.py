@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from clock import Clock
-from simple_agent import Agent, DCA_Agent, DH_Agent, HODL_Agent, SmartDCA_Agent
+from simple_agent import Agent, HODL_Agent, Test_Agent
 from simple_observer import Observer, CsvObserver, WebApiObserver, TelemetryObserver
 
 import cbpro
@@ -37,8 +37,8 @@ class Environment(ABC):
     environment invokes and executes the action of each agent. This process
     continues until the stop condition (if any) is reached.
     """
-    def __init__(self, time) -> None:
-        self._clock = Clock(time)
+    def __init__(self, start, end, epoch) -> None:
+        self._clock = Clock(start, end, epoch)
 
     @abstractmethod
     def step(self) -> None:
@@ -90,7 +90,7 @@ class SimulatedEnvironment(Environment):
     epoch period.
     """
     def __init__(self, start_time=0, end_time=0, epoch_period=3):
-        super().__init__(time=start_time)
+        super().__init__(start=start_time, end=end_time, epoch=epoch_period)
         self._start_time = start_time # Unix format (seconds)
         self._end_time = end_time # Unix format (seconds)
         self._epoch_period = epoch_period # Epoch period in days
@@ -152,6 +152,10 @@ class SimulatedEnvironment(Environment):
         #data["5-Day Moving Average"] = data['close'].rolling(7200).mean() # Moving Average via Pandas
         #df.to_csv(f'init_data.csv', index=False, header=True)
 
+    def export_csv(self):
+        for agent in self._agents:
+            agent._df.to_csv(f'export_{agent.__class__.__name__}_data.csv', index=False)
+
     def step(self):
         # Get latest dataframe from observer.
         observation = self._obs.observe()
@@ -172,19 +176,25 @@ class SimulatedEnvironment(Environment):
             #action.simulate()
             agent.get_action().simulate()
 
-        # Simulate the action
+    def run(self, delay=0):
+        while True:
+            self.step()
+            if self._clock.time_til_epoch() <= 0:
+                self._clock.reset_epoch()
+                # do stuff
+            if self._clock.time_til_end() <= 0:
+                self.export_csv()
+                break
 
-    def run_to_completion(self):
-        pass
-
-    def run(self):
-        pass
+            # Interval between steps
+            time.sleep(delay)
 
 if __name__ == '__main__':
     # The start time must be retrieved using datetime.now(), conversion to UTC occurs in initialize_agents().
     #start_time = math.floor(dt.datetime.now().timestamp())
     start_time = 1630689360-1
-    end_time = 5000000000 # Basically never end
+    #end_time = 5000000000 # Basically never end
+    end_time = 1640153700
     print(f"Simulated Environment started with unix time: {start_time}")
     
     env = SimulatedEnvironment(start_time=start_time, end_time=end_time, epoch_period=7)
@@ -194,14 +204,13 @@ if __name__ == '__main__':
 
     agents = [
         HODL_Agent(),
-        #DCA_Agent(),
-        #DH_Agent(),
-        #SmartDCA_Agent(),
+        Test_Agent()
     ]
     
     env.load_agents(agents)
 
     env.initialize_agents(id='SOL-USD', qty_usd=1000, qty_crypto=10)
 
-    for x in range(6):
-        env.step()
+    exec_start = time.time()
+    env.run()
+    print(f"Environment run completed in: {time.time() - exec_start} seconds!")
