@@ -17,6 +17,10 @@ SECONDS_PER_20DAYS = SECONDS_PER_DAY*20
 
 SIMULATED_SPREAD = 0.03
 
+CBPRO_FEE_RATE = 0.005
+BINANCE_FEE_RATE = 0.001
+FEE_RATE = CBPRO_FEE_RATE
+
 class Environment(ABC):
     """
     The environment is the main module of the simple strategies system. It
@@ -154,7 +158,7 @@ class SimulatedEnvironment(Environment):
 
     def export_csv(self):
         for agent in self._agents:
-            agent._df.to_csv(f'export_{agent.__class__.__name__}_data.csv', index=False)
+            agent._df.to_csv(f'export_{agent.__class__.__name__}-{agent.fee_rate}_data.csv', index=False)
 
     def step(self):
         # Get latest dataframe from observer.
@@ -203,8 +207,9 @@ if __name__ == '__main__':
     env.load_observer(obs)
 
     agents = [
-        HODL_Agent(),
-        Test_Agent()
+        HODL_Agent(fee=0),
+        Test_Agent(fee=CBPRO_FEE_RATE),
+        Test_Agent(fee=BINANCE_FEE_RATE)
     ]
     
     env.load_agents(agents)

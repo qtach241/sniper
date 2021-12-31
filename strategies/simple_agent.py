@@ -11,10 +11,15 @@ CD_ONE_DAY = 86400
 DF_COLUMNS = ["unix", "bid", "ask", "qty_usd", "qty_crypto", "networth"]
 
 class Agent(ABC):
-    def __init__(self) -> None:
+    def __init__(self, fee=0) -> None:
         self._df = pd.DataFrame(columns=DF_COLUMNS)
         self._clock = None
         self._action_list = []
+        self._fee = fee
+
+    @property
+    def fee_rate(self):
+        return self._fee
 
     def set_clock(self, obj) -> None:
         self._clock = obj
@@ -54,8 +59,8 @@ class Agent(ABC):
         pass
 
 class HODL_Agent(Agent):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, fee=0) -> None:
+        super().__init__(fee)
         action_list = [
             Action_Hold(agent=self, cd=CD_NONE),
             Action_BuyAll(agent=self, cd=CD_SIX_HOUR)
@@ -73,8 +78,8 @@ class HODL_Agent(Agent):
         return super().reset()
 
 class Test_Agent(Agent):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, fee=0) -> None:
+        super().__init__(fee)
         action_list = [
             Action_Hold(agent=self, cd=CD_NONE),
             Action_Buy100(agent=self, cd=CD_SIX_HOUR),
@@ -98,8 +103,8 @@ class Test_Agent(Agent):
         return super().reset()
 
 class Bollinger_Agent(Agent):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, fee) -> None:
+        super().__init__(fee)
         action_list = [
             Action_Hold(agent=self, cd=CD_NONE),
             Action_Buy100(agent=self, cd=CD_SIX_HOUR),
