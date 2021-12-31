@@ -12,3 +12,6 @@ docs/build/
 # Project keys
 api_keys/
 auth_keys.py
+
+# Data archive folder
+archive/
