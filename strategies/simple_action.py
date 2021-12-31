@@ -1,6 +1,10 @@
 from enum import Enum
 from abc import ABC, abstractmethod
 
+CBPRO_FEE_RATE = 0.005
+BINANCE_FEE_RATE = 0.001
+FEE_RATE = CBPRO_FEE_RATE
+
 class ActionSpace(Enum):
     HOLD = 1
     MARKET_ORDER_BUY_ALL = 2
@@ -123,18 +127,19 @@ class Action_Buy100(Action):
         #print("Simulating BUY 100 action")
         c_qty_usd = self._agent._df.at[self._agent._df.index[-1], 'qty_usd']
         c_qty_ass = self._agent._df.at[self._agent._df.index[-1], 'qty_crypto']
-        #c_bid = self._agent._df.at[self._agent._df.index[-1], 'bid']
         c_ask = self._agent._df.at[self._agent._df.index[-1], 'ask']
         
         usd_to_xfer = 100 if c_qty_usd >= 100 else c_qty_usd
+        fee_usd = usd_to_xfer * FEE_RATE
 
         n_qty_usd = c_qty_usd - usd_to_xfer
-        n_qty_ass = c_qty_ass + (usd_to_xfer/c_ask)
+        n_qty_ass = c_qty_ass + ((usd_to_xfer-fee_usd)/c_ask)
 
         # Modify the last row in place with the new qty values
         self._agent.update_tail(n_qty_usd, n_qty_ass)
-        print(f"{self._agent.__class__.__name__} BUY {usd_to_xfer/c_ask} crypto for {usd_to_xfer} USD")
-        #print(self._agent._df)
+        print(f"{self._agent._clock.get_time()}: \
+            {self._agent.__class__.__name__} BOUGHT {(usd_to_xfer-fee_usd)/c_ask} crypto for {usd_to_xfer} USD \
+            (U: {n_qty_usd}, C: {n_qty_ass}, N: {self._agent._df.at[self._agent._df.index[-1], 'networth']})")
 
 class Action_Sell100(Action):
     def __init__(self, agent, cd) -> None:
@@ -150,14 +155,15 @@ class Action_Sell100(Action):
         c_qty_usd = self._agent._df.at[self._agent._df.index[-1], 'qty_usd']
         c_qty_ass = self._agent._df.at[self._agent._df.index[-1], 'qty_crypto']
         c_bid = self._agent._df.at[self._agent._df.index[-1], 'bid']
-        #c_ask = self._agent._df.at[self._agent._df.index[-1], 'ask']
         
         ass_to_xfer = 100/c_bid if c_qty_ass >= 100/c_bid else c_qty_ass
+        fee_usd = (ass_to_xfer*c_bid) * FEE_RATE
 
-        n_qty_usd = c_qty_usd + (ass_to_xfer*c_bid)
+        n_qty_usd = c_qty_usd + (ass_to_xfer*c_bid) - fee_usd
         n_qty_ass = c_qty_ass - ass_to_xfer
 
         # Modify the last row in place with the new qty values
         self._agent.update_tail(n_qty_usd, n_qty_ass)
-        print(f"{self._agent.__class__.__name__} SELL {ass_to_xfer} crypto for {ass_to_xfer*c_bid} USD")
-        #print(self._agent._df)
+        print(f"{self._agent._clock.get_time()}: \
+            {self._agent.__class__.__name__} SOLD {ass_to_xfer} crypto for {(ass_to_xfer*c_bid) - fee_usd} USD \
+            (U: {n_qty_usd}, C: {n_qty_ass}, N: {self._agent._df.at[self._agent._df.index[-1], 'networth']})")
