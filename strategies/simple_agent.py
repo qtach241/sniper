@@ -1,7 +1,7 @@
 import pandas as pd
 from abc import ABC, abstractmethod
 
-from simple_action import Action, Action_Hold, Action_BuyAll, Action_Buy100, Action_Sell100
+from simple_action import Action, Action_Hold, Action_BuyAll, Action_SellAll, Action_Buy100, Action_Sell100
 
 CD_NONE = 0
 CD_ONE_HOUR = 3600
@@ -102,15 +102,37 @@ class Test_Agent(Agent):
     def reset(self) -> None:
         return super().reset()
 
-class Bollinger_Agent(Agent):
+class SMA_5_20_Agent(Agent):
     def __init__(self, fee) -> None:
         super().__init__(fee)
         action_list = [
             Action_Hold(agent=self, cd=CD_NONE),
-            Action_Buy100(agent=self, cd=CD_SIX_HOUR),
-            Action_Sell100(agent=self, cd=CD_SIX_HOUR)
+            Action_BuyAll(agent=self, cd=CD_SIX_HOUR),
+            Action_SellAll(agent=self, cd=CD_SIX_HOUR)
         ]
         self.set_action_list(action_list)
 
+    def update(self, df) -> None:
+        super().update(df)
+        self._df["SMA5"] = self._df['bid'].rolling(7200).mean()
+        self._df["SMA20"] = self._df['bid'].rolling(28800).mean()
+
     def get_action(self) -> Action:
-        pass
+        last_qty_usd = self._df.iloc[-1]['qty_usd']
+        last_qty_ass = self._df.iloc[-1]['qty_crypto']
+        sma_s = self._df.at[self._df.index[-1], 'SMA5']
+        sma_l = self._df.at[self._df.index[-1], 'SMA20']
+
+        sma_s_prev = self._df.at[self._df.index[-2], 'SMA5']
+
+        if sma_s_prev < sma_l and sma_s >= sma_l and last_qty_usd > 0:
+            # Golden Cross
+            return self._action_list[1] # Buy All
+        elif sma_s_prev >= sma_l and sma_s < sma_l and last_qty_ass > 0:
+            # Death Cross
+            return self._action_list[2] # Sell All
+        else:
+            return self._action_list[0] # Hold
+
+class RSI_7_Agent(Agent):
+    pass

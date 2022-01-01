@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from clock import Clock
-from simple_agent import Agent, HODL_Agent, Test_Agent
+from simple_agent import Agent, HODL_Agent, Test_Agent, SMA_5_20_Agent
 from simple_observer import Observer, CsvObserver, WebApiObserver, TelemetryObserver
 
 import cbpro
@@ -207,9 +207,10 @@ if __name__ == '__main__':
     env.load_observer(obs)
 
     agents = [
-        HODL_Agent(fee=0),
-        Test_Agent(fee=CBPRO_FEE_RATE),
-        Test_Agent(fee=BINANCE_FEE_RATE)
+        #HODL_Agent(fee=0),
+        #Test_Agent(fee=CBPRO_FEE_RATE),
+        #Test_Agent(fee=BINANCE_FEE_RATE),
+        SMA_5_20_Agent(fee=CBPRO_FEE_RATE)
     ]
     
     env.load_agents(agents)
