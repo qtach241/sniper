@@ -102,28 +102,40 @@ class Test_Agent(Agent):
     def reset(self) -> None:
         return super().reset()
 
-class SMA_5_20_Agent(Agent):
-    def __init__(self, fee) -> None:
+class SMA_Agent(Agent):
+    def __init__(self, fee, sma_s, sma_l) -> None:
         super().__init__(fee)
         action_list = [
             Action_Hold(agent=self, cd=CD_NONE),
-            Action_BuyAll(agent=self, cd=CD_SIX_HOUR),
-            Action_SellAll(agent=self, cd=CD_SIX_HOUR)
+            Action_BuyAll(agent=self, cd=CD_NONE),
+            Action_SellAll(agent=self, cd=CD_NONE)
         ]
         self.set_action_list(action_list)
+        
+        # SMA short and long window period coverted from days to minutes
+        self._sma_s = sma_s*24*60
+        self._sma_l = sma_l*24*60
+
+    @property
+    def SMA_s(self):
+        return self._sma_s
+
+    @property
+    def SMA_l(self):
+        return self._sma_l
 
     def update(self, df) -> None:
         super().update(df)
-        self._df["SMA5"] = self._df['bid'].rolling(7200).mean()
-        self._df["SMA20"] = self._df['bid'].rolling(28800).mean()
+        self._df["SMA_S"] = self._df['bid'].rolling(self.SMA_s).mean()
+        self._df["SMA_L"] = self._df['bid'].rolling(self.SMA_l).mean()
 
     def get_action(self) -> Action:
         last_qty_usd = self._df.iloc[-1]['qty_usd']
         last_qty_ass = self._df.iloc[-1]['qty_crypto']
-        sma_s = self._df.at[self._df.index[-1], 'SMA5']
-        sma_l = self._df.at[self._df.index[-1], 'SMA20']
+        sma_s = self._df.at[self._df.index[-1], 'SMA_S']
+        sma_l = self._df.at[self._df.index[-1], 'SMA_L']
 
-        sma_s_prev = self._df.at[self._df.index[-2], 'SMA5']
+        sma_s_prev = self._df.at[self._df.index[-2], 'SMA_S']
 
         if sma_s_prev < sma_l and sma_s >= sma_l and last_qty_usd > 0:
             # Golden Cross
@@ -133,6 +145,26 @@ class SMA_5_20_Agent(Agent):
             return self._action_list[2] # Sell All
         else:
             return self._action_list[0] # Hold
+
+class SMA_5_20_Agent(SMA_Agent):
+    def __init__(self, fee) -> None:
+        super().__init__(fee, sma_s=5, sma_l=20)
+
+    def update(self, df) -> None:
+        super().update(df)
+
+    def get_action(self) -> Action:
+        return super().get_action()
+
+class SMA_1_5_Agent(SMA_Agent):
+    def __init__(self, fee) -> None:
+        super().__init__(fee, sma_s=1, sma_l=5)
+
+    def update(self, df) -> None:
+        super().update(df)
+
+    def get_action(self) -> Action:
+        return super().get_action()
 
 class RSI_7_Agent(Agent):
     pass
