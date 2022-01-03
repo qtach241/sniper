@@ -203,6 +203,7 @@ class DCA_Agent(Agent):
         self._buy_percent = buy_percent
 
         self._entry_price = 0
+        self._next_buy_price = 0
         self._avg_buy_price = 0
         #self._break_even_price = 0
         self._take_profit_price = 0
@@ -220,6 +221,12 @@ class DCA_Agent(Agent):
 
     @entry_price.setter
     def entry_price(self, value): self._entry_price = value
+
+    @property
+    def next_buy_price(self): return self._next_buy_price
+
+    @next_buy_price.setter
+    def next_buy_price(self, value): self._next_buy_price = value
 
     @property
     def avg_buy_price(self): return self._avg_buy_price
@@ -256,23 +263,25 @@ class DCA_Agent(Agent):
             if is_local_min and last_qty_usd > 0:
                 self.entry_price = ask
                 self.avg_buy_price = self.entry_price
+                self.next_buy_price = self.entry_price * (1 - self._buy_percent)
                 self.state = DCA_Agent.DCA_Agent_State.BUYING_BELOW_ENTRY
-                print(f"Entering at local min: {self.entry_price}")
+                print(f"Entry price: {self.entry_price} USD, Initial TP: {self._get_tp_price()} USD, Next buy price: {self.next_buy_price} USD")
                 return self._action_list[1] # Buy 100
             else:
                 return self._action_list[0] # Hold
 
         elif self.state == DCA_Agent.DCA_Agent_State.BUYING_BELOW_ENTRY:
             
-            if ask < self.entry_price and last_qty_usd > 0 and self._action_list[1].time_til() <= 0:
+            if ask < self.next_buy_price and last_qty_usd > 0 and self._action_list[1].time_til() <= 0:
                 usd_to_xfer = 100 if last_qty_usd >= 100 else last_qty_usd
                 fee_usd = usd_to_xfer * self.fee_rate
                 self.avg_buy_price = (last_qty_ass * self._avg_buy_price + (((usd_to_xfer-fee_usd)/ask)*ask) ) / ( last_qty_ass + ((usd_to_xfer-fee_usd)/ask) )
                 #self.avg_buy_price = (last_qty_ass * self.avg_buy_price + (usd_to_xfer-fee_usd)) / ( last_qty_ass + ((usd_to_xfer-fee_usd)/ask) )
-                print(f"New avg buy price: {self.avg_buy_price}, tp price: {self._get_tp_price()}")
+                self.next_buy_price = ask * (1 - self._buy_percent)
+                print(f"Extra buy: {ask} USD, Avg buy price: {self.avg_buy_price} USD, New TP price: {self._get_tp_price()} USD, Next buy price: {self.next_buy_price} USD")
                 return self._action_list[1] # Buy 100
             elif bid > self._get_tp_price():
-                print(f"Bid ({bid}) hit take profit threshold: {self._get_tp_price()}. Now waiting for exit")
+                print(f"Bid ({bid} USD) hit take profit threshold: {self._get_tp_price()} USD. Now waiting for exit")
                 self.state = DCA_Agent.DCA_Agent_State.WAIT_FOR_EXIT
                 return self._action_list[0] # Hold
             else:

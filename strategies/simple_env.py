@@ -212,7 +212,8 @@ if __name__ == '__main__':
         #Test_Agent(fee=BINANCE_FEE_RATE),
         #SMA_5_20_Agent(fee=CBPRO_FEE_RATE),
         #SMA_1_5_Agent(fee=CBPRO_FEE_RATE)
-        DCA_Agent(fee=CBPRO_FEE_RATE)
+        DCA_Agent(fee=CBPRO_FEE_RATE),
+        DCA_Agent(fee=0)
     ]
     
     env.load_agents(agents)
