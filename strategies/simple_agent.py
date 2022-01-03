@@ -1,8 +1,9 @@
 import pandas as pd
+import pandas_ta as pta
 from abc import ABC, abstractmethod
 from enum import Enum
 
-from simple_action import Action, Action_Hold, Action_BuyAll, Action_SellAll, Action_Buy100, Action_Sell100
+from simple_action import Action, Action_Hold, Action_BuyAll, Action_SellAll, Action_Buy, Action_Sell, Action_Buy100, Action_Sell100
 
 CD_NONE = 0
 CD_ONE_HOUR = 3600
@@ -180,8 +181,43 @@ class SMA_1_5_Agent(SMA_Agent):
     def get_action(self) -> Action:
         return super().get_action()
 
-class RSI_7_Agent(Agent):
-    pass
+class RSI_Agent(Agent):
+    def __init__(self, fee=0, length=14) -> None:
+        super().__init__(fee=fee)
+        action_list = [
+            Action_Hold(agent=self, cd=CD_NONE),
+            Action_Buy(agent=self, cd=CD_SIX_HOUR, qty=200),
+            Action_Sell(agent=self, cd=CD_SIX_HOUR, qty=200)
+        ]
+        self.set_action_list(action_list)
+
+        self._length = length
+
+    @property
+    def length(self): return self._length
+
+    @length.setter
+    def length(self, value): self._length = value
+
+    def update(self, df) -> None:
+        super().update(df)
+        self._df["RSI"] = pta.rsi(self._df['bid'], length=14)
+
+    def get_action(self) -> Action:
+        last_qty_usd = self._df.at[self._df.index[-1], 'qty_usd']
+        last_qty_ass = self._df.at[self._df.index[-1], 'qty_crypto']
+
+        rsi = self._df.at[self._df.index[-1], 'RSI']
+
+        is_overvalued = rsi > 70
+        is_undervalued = rsi < 30
+
+        if is_undervalued and last_qty_usd > 0:
+            return self._action_list[1] # Buy
+        elif is_overvalued and last_qty_ass > 0:
+            return self._action_list[2] # Sell
+        else:
+            return self._action_list[0] # Hold
 
 class DCA_Agent(Agent):
 
@@ -190,12 +226,13 @@ class DCA_Agent(Agent):
         BUYING_BELOW_ENTRY = 2
         WAIT_FOR_EXIT = 3
 
-    def __init__(self, fee=0, base=0, tp_percent=0.02, buy_percent=0.05) -> None:
+    def __init__(self, fee=0, base=500, tp_percent=0.02, buy_percent=0.05) -> None:
         super().__init__(fee=fee)
         action_list = [
             Action_Hold(agent=self, cd=CD_NONE),
+            Action_Buy(agent=self, cd=300, qty=base),
             Action_Buy100(agent=self, cd=300),
-            Action_SellAll(agent=self, cd=300)
+            Action_SellAll(agent=self, cd=300),
         ]
         self.set_action_list(action_list)
 
@@ -245,6 +282,7 @@ class DCA_Agent(Agent):
         self._df["EMA"] = self._df['bid'].ewm(5).mean()
         self._df["BID_DIFF"] = self._df['bid'].diff(periods=5)
         self._df["EMA_DIFF"] = self._df['EMA'].diff(periods=5)
+        self._df["RSI"] = pta.rsi(self._df['bid'], length=14)
 
     def get_action(self) -> Action:
         bid = self._df.at[self._df.index[-1], 'bid']
@@ -257,16 +295,25 @@ class DCA_Agent(Agent):
 
         is_local_min = True if slope_prev < 0 and slope >= 0 else False
         is_local_max = True if slope_prev > 0 and slope <= 0 else False
+
+        rsi_prev = self._df.at[self._df.index[-2], 'RSI']
+        rsi = self._df.at[self._df.index[-1], 'RSI']
+
+        is_overvalued = rsi > 70
+        is_undervalued = rsi < 30
+
+        bull_signal = True if rsi_prev < 30 and rsi >= 30 else False
+        bear_signal = True if rsi_prev > 70 and rsi <= 70 else False
         
         if self.state == DCA_Agent.DCA_Agent_State.WAIT_FOR_ENTRY:
             
-            if is_local_min and last_qty_usd > 0:
+            if is_undervalued and last_qty_usd > 0:
                 self.entry_price = ask
                 self.avg_buy_price = self.entry_price
                 self.next_buy_price = self.entry_price * (1 - self._buy_percent)
                 self.state = DCA_Agent.DCA_Agent_State.BUYING_BELOW_ENTRY
                 print(f"Entry price: {self.entry_price} USD, Initial TP: {self._get_tp_price()} USD, Next buy price: {self.next_buy_price} USD")
-                return self._action_list[1] # Buy 100
+                return self._action_list[1] # Buy Base Qty
             else:
                 return self._action_list[0] # Hold
 
@@ -279,7 +326,7 @@ class DCA_Agent(Agent):
                 #self.avg_buy_price = (last_qty_ass * self.avg_buy_price + (usd_to_xfer-fee_usd)) / ( last_qty_ass + ((usd_to_xfer-fee_usd)/ask) )
                 self.next_buy_price = ask * (1 - self._buy_percent)
                 print(f"Extra buy: {ask} USD, Avg buy price: {self.avg_buy_price} USD, New TP price: {self._get_tp_price()} USD, Next buy price: {self.next_buy_price} USD")
-                return self._action_list[1] # Buy 100
+                return self._action_list[2] # Buy 100
             elif bid > self._get_tp_price():
                 print(f"Bid ({bid} USD) hit take profit threshold: {self._get_tp_price()} USD. Now waiting for exit")
                 self.state = DCA_Agent.DCA_Agent_State.WAIT_FOR_EXIT
@@ -288,10 +335,10 @@ class DCA_Agent(Agent):
                 return self._action_list[0] # Hold
 
         elif self.state == DCA_Agent.DCA_Agent_State.WAIT_FOR_EXIT:
-            
-            if is_local_max and bid > self._get_tp_price() and last_qty_ass > 0 and self._action_list[2].time_til() <= 0:
-                print(f"Taking profit at local max")
+            bid_prev = self._df.at[self._df.index[-2], 'bid']
+            if bid > self._get_tp_price() and last_qty_ass > 0 and self._action_list[2].time_til() <= 0:
+                print(f"Taking profit at {bid} USD")
                 self.state = DCA_Agent.DCA_Agent_State.WAIT_FOR_ENTRY
-                return self._action_list[2] # Sell All, take profits
+                return self._action_list[3] # Sell All, take profits
             else:
                 return self._action_list[0] # Hold

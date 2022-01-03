@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from clock import Clock
-from simple_agent import Agent, HODL_Agent, Test_Agent, SMA_5_20_Agent, SMA_1_5_Agent, DCA_Agent
+from simple_agent import Agent, HODL_Agent, Test_Agent, SMA_5_20_Agent, SMA_1_5_Agent, DCA_Agent, RSI_Agent
 from simple_observer import Observer, CsvObserver, WebApiObserver, TelemetryObserver
 
 import cbpro
@@ -213,12 +213,12 @@ if __name__ == '__main__':
         #SMA_5_20_Agent(fee=CBPRO_FEE_RATE),
         #SMA_1_5_Agent(fee=CBPRO_FEE_RATE)
         DCA_Agent(fee=CBPRO_FEE_RATE),
-        DCA_Agent(fee=0)
+        RSI_Agent(fee=CBPRO_FEE_RATE)
     ]
     
     env.load_agents(agents)
 
-    env.initialize_agents(id='SOL-USD', qty_usd=1000, qty_crypto=0)
+    env.initialize_agents(id='SOL-USD', qty_usd=2000, qty_crypto=0)
 
     exec_start = time.time()
     env.run()
