@@ -5,8 +5,10 @@ class ActionSpace(Enum):
     HOLD = 1
     MARKET_ORDER_BUY_ALL = 2
     MARKET_ORDER_SELL_ALL = 3
-    MARKET_ORDER_BUY_100 = 4
-    MARKET_ORDER_SELL_100 = 5
+    MARKET_ORDER_BUY = 4
+    MARKET_ORDER_SELL = 5
+    MARKET_ORDER_BUY_100 = 6
+    MARKET_ORDER_SELL_100 = 7
 
 class Action(ABC):
     def __init__(self, agent, id, cd) -> None:
@@ -58,6 +60,74 @@ class Action_Hold(Action):
     def on_simulate(self):
         # Do nothing
         pass
+
+class Action_Buy(Action):
+    def __init__(self, agent, cd, qty, id=ActionSpace.MARKET_ORDER_BUY) -> None:
+        super().__init__(agent=agent, id=id, cd=cd)
+        self._qty = qty
+
+    @property
+    def qty(self):
+        return self._qty
+
+    @qty.setter
+    def qty(self, value):
+        self._qty = value
+
+    def on_execute(self):
+        return super().on_execute()
+
+    def on_simulate(self):
+        # Transfer self.qty USD to the crypto asset (ie. BUY) at the current ask price.
+        c_qty_usd = self._agent._df.at[self._agent._df.index[-1], 'qty_usd']
+        c_qty_ass = self._agent._df.at[self._agent._df.index[-1], 'qty_crypto']
+        c_ask = self._agent._df.at[self._agent._df.index[-1], 'ask']
+        
+        usd_to_xfer = self.qty if c_qty_usd >= self.qty else c_qty_usd
+        fee_usd = usd_to_xfer * self._agent.fee_rate
+
+        n_qty_usd = c_qty_usd - usd_to_xfer
+        n_qty_ass = c_qty_ass + ((usd_to_xfer-fee_usd)/c_ask)
+
+        # Modify the last row in place with the new qty values
+        self._agent.update_tail(n_qty_usd, n_qty_ass)
+        print(f"{self._agent._clock.get_time()}: ",
+            f"{self._agent.__class__.__name__}-{self._agent.fee_rate} BOUGHT {(usd_to_xfer-fee_usd)/c_ask} crypto for {usd_to_xfer} USD ",
+            f"(U: {n_qty_usd}, C: {n_qty_ass}, N: {self._agent._df.at[self._agent._df.index[-1], 'networth']})")
+
+class Action_Sell(Action):
+    def __init__(self, agent, cd, qty, id=ActionSpace.MARKET_ORDER_SELL) -> None:
+        super().__init__(agent=agent, id=id, cd=cd)
+        self._qty = qty
+
+    @property
+    def qty(self):
+        return self._qty
+
+    @qty.setter
+    def qty(self, value):
+        self._qty = value
+
+    def on_execute(self):
+        return super().on_execute()
+
+    def on_simulate(self):
+        # Transfer self.qty USD worth of crypto asset to USD (ie. SELL) at the current bid price.
+        c_qty_usd = self._agent._df.at[self._agent._df.index[-1], 'qty_usd']
+        c_qty_ass = self._agent._df.at[self._agent._df.index[-1], 'qty_crypto']
+        c_bid = self._agent._df.at[self._agent._df.index[-1], 'bid']
+        
+        ass_to_xfer = self.qty/c_bid if c_qty_ass >= self.qty/c_bid else c_qty_ass
+        fee_usd = (ass_to_xfer*c_bid) * self._agent.fee_rate
+
+        n_qty_usd = c_qty_usd + (ass_to_xfer*c_bid) - fee_usd
+        n_qty_ass = c_qty_ass - ass_to_xfer
+
+        # Modify the last row in place with the new qty values
+        self._agent.update_tail(n_qty_usd, n_qty_ass)
+        print(f"{self._agent._clock.get_time()}: ",
+            f"{self._agent.__class__.__name__}-{self._agent.fee_rate} SOLD {ass_to_xfer} crypto for {(ass_to_xfer*c_bid) - fee_usd} USD ",
+            f"(U: {n_qty_usd}, C: {n_qty_ass}, N: {self._agent._df.at[self._agent._df.index[-1], 'networth']})")
 
 class Action_BuyAll(Action):
     def __init__(self, agent, cd) -> None:
