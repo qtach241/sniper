@@ -3,6 +3,7 @@ import pandas_ta as pta
 from abc import ABC, abstractmethod
 from enum import Enum
 
+from cost_basis import CostBasis
 from simple_action import Action, Action_Hold, Action_BuyAll, Action_SellAll, Action_Buy, Action_Sell, Action_Buy100, Action_Sell100
 
 CD_NONE = 0
@@ -78,6 +79,34 @@ class HODL_Agent(Agent):
 
     def reset(self) -> None:
         return super().reset()
+
+class DCA_Benchmark_Agent(Agent):
+    def __init__(self, fee=0, days=3, qty=100) -> None:
+        super().__init__(fee=fee)
+        action_list = [
+            Action_Hold(agent=self, cd=CD_NONE),
+            Action_Buy(agent=self, cd=days*24*60*60, qty=qty)
+        ]
+        self.set_action_list(action_list)
+
+        self._cost_basis = CostBasis()
+
+    def get_cost_basis(self):
+        return self._cost_basis.get_cost_basis()
+
+    def get_action(self) -> Action:
+        ask = self._df.iloc[-1]['ask']
+        last_qty_usd = self._df.iloc[-1]['qty_usd']
+        
+        if last_qty_usd > 0 and self._action_list[1].time_til() <= 0:
+            usd_to_xfer = self._action_list[1].qty if last_qty_usd >= self._action_list[1].qty else last_qty_usd
+            fee_usd = usd_to_xfer * self.fee_rate
+            # Record this buy so cost basis may be calculated at the end.
+            self._cost_basis.buy((usd_to_xfer-fee_usd)/ask, ask)
+            print(f"NEW Cost Basis: {self.get_cost_basis()}")
+            return self._action_list[1] # Buy
+        else:
+            return self._action_list[0] # Hold
 
 class Test_Agent(Agent):
     def __init__(self, fee=0) -> None:
