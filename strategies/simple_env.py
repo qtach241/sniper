@@ -1,15 +1,13 @@
 from abc import ABC, abstractmethod
 from clock import Clock
-from simple_agent import Agent, HODL_Agent, Test_Agent, SMA_5_20_Agent, SMA_1_5_Agent, DCA_Agent, RSI_Agent
+from simple_agent import Agent, HODL_Agent, Test_Agent, SMA_5_20_Agent, SMA_1_5_Agent, DCA_Agent, RSI_Agent, RSI_MACD_Agent
 from simple_observer import Observer, CsvObserver, WebApiObserver, TelemetryObserver
 
 import cbpro
 import pandas as pd
 import datetime as dt
-import math
 import time
 
-DO_INIT_LOOPS = 96 # Number of API calls needed to back-populate 20 days initial dataframe. (28800 / 300)
 SECONDS_PER_LOOP = 60*300 # 60 seconds per minute, 300 minutes per API call
 
 SECONDS_PER_DAY = 86400
@@ -212,8 +210,9 @@ if __name__ == '__main__':
         #Test_Agent(fee=BINANCE_FEE_RATE),
         #SMA_5_20_Agent(fee=CBPRO_FEE_RATE),
         #SMA_1_5_Agent(fee=CBPRO_FEE_RATE)
-        DCA_Agent(fee=CBPRO_FEE_RATE),
-        RSI_Agent(fee=CBPRO_FEE_RATE)
+        #DCA_Agent(fee=CBPRO_FEE_RATE),
+        #RSI_Agent(fee=CBPRO_FEE_RATE)
+        RSI_MACD_Agent(fee=0)
     ]
     
     env.load_agents(agents)

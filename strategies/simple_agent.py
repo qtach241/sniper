@@ -81,11 +81,11 @@ class HODL_Agent(Agent):
         return super().reset()
 
 class DCA_Benchmark_Agent(Agent):
-    def __init__(self, fee=0, days=3, qty=100) -> None:
+    def __init__(self, fee=0, cd_days=3, qty=100) -> None:
         super().__init__(fee=fee)
         action_list = [
             Action_Hold(agent=self, cd=CD_NONE),
-            Action_Buy(agent=self, cd=days*24*60*60, qty=qty)
+            Action_Buy(agent=self, cd=cd_days*24*60*60, qty=qty)
         ]
         self.set_action_list(action_list)
 
@@ -103,7 +103,7 @@ class DCA_Benchmark_Agent(Agent):
             fee_usd = usd_to_xfer * self.fee_rate
             # Record this buy so cost basis may be calculated at the end.
             self._cost_basis.buy((usd_to_xfer-fee_usd)/ask, ask)
-            print(f"NEW Cost Basis: {self.get_cost_basis()}")
+            #print(f"NEW Cost Basis: {self.get_cost_basis()}")
             return self._action_list[1] # Buy
         else:
             return self._action_list[0] # Hold
@@ -220,7 +220,7 @@ class RSI_Agent(Agent):
         ]
         self.set_action_list(action_list)
 
-        self._length = length
+        self._length = length*24*60 # Convert from days to minutes
 
     @property
     def length(self): return self._length
@@ -230,7 +230,7 @@ class RSI_Agent(Agent):
 
     def update(self, df) -> None:
         super().update(df)
-        self._df["RSI"] = pta.rsi(self._df['bid'], length=14)
+        self._df["RSI"] = pta.rsi(self._df['bid'], length=self.length)
 
     def get_action(self) -> Action:
         last_qty_usd = self._df.at[self._df.index[-1], 'qty_usd']
@@ -245,6 +245,102 @@ class RSI_Agent(Agent):
             return self._action_list[1] # Buy
         elif is_overvalued and last_qty_ass > 0:
             return self._action_list[2] # Sell
+        else:
+            return self._action_list[0] # Hold
+
+class RSI_MACD_Agent(Agent):
+
+    class RSI_MAC_Agent_State(Enum):
+        WAIT_FOR_BUY_SIGNAL = 1
+        WAIT_FOR_BUY_CONFIRMATION = 2
+        #WAIT_FOR_EXIT = 3
+
+    def __init__(self, fee=0, cd_days=3, qty=100, length=14, fast=12, slow=26, signal=9, tp=0.1, re=0.1) -> None:
+        super().__init__(fee=fee)
+        action_list = [
+            Action_Hold(agent=self, cd=CD_NONE),
+            Action_Buy(agent=self, cd=cd_days*24*60*60, qty=qty)
+            #Action_SellAll(agent=self, cd=CD_NONE),
+        ]
+        self.set_action_list(action_list)
+
+        self._length = length*24*60     # Rsi period, converted from days to minutes
+        self._fast = fast*24*60         # MACD fast period, converted from days to minutes
+        self._slow = slow*24*60         # MACD slow period, converted from days to minutes
+        self._signal = signal*24*60     # MACD signal period, converted from days to minutes
+
+        #self._tp = tp # Target percentage gain for exit
+        #self._re = re # Target percentage drop for re-entry
+
+        self._entry_price = 0
+        self._exit_price = 0
+
+        self._cost_basis = CostBasis()
+
+        self._state = RSI_MACD_Agent.RSI_MAC_Agent_State.WAIT_FOR_BUY_SIGNAL
+
+    @property
+    def state(self): return self._state
+
+    @state.setter
+    def state(self, value): self._state = value
+
+    @property
+    def length(self): return self._length
+
+    @length.setter
+    def length(self, value): self._length = value
+
+    @property
+    def fast(self): return self._fast
+
+    @fast.setter
+    def fast(self, value): self._fast = value
+
+    @property
+    def slow(self): return self._slow
+
+    @slow.setter
+    def slow(self, value): self._slow = value
+
+    @property
+    def signal(self): return self._signal
+
+    @signal.setter
+    def signal(self, value): self._signal = value
+
+    def _get_tp_price(self):
+        return self._entry_price * (1 + self._tp)
+
+    def _get_re_price(self):
+        return self._exit_price * (1 - self._re)
+
+    def get_cost_basis(self):
+        return self._cost_basis.get_cost_basis()
+
+    def update(self, df) -> None:
+        super().update(df)
+        self._df["RSI"] = pta.rsi(self._df['bid'], length=self.length)
+        self._df[["MACD", "MACD_HIST", "MACD_SIGNAL"]] = pta.macd(self._df['bid'], fast=self.fast, slow=self.slow, signal=self.signal)
+
+    def get_action(self) -> Action:
+        ask = self._df.iloc[-1]['ask']
+        last_qty_usd = self._df.iloc[-1]['qty_usd']
+
+        rsi = self._df.iloc[1]['RSI']
+        macd_hist = self._df.iloc[-1]['MACD_HIST']
+        macd_hist_prev = self._df.iloc[-2]['MACD_HIST']
+
+        buy_signal = rsi < 30
+        buy_confirm = True if buy_signal == True and (macd_hist_prev > 0 and macd_hist >= 0) else False
+        
+        if buy_confirm == True and last_qty_usd > 0 and self._action_list[1].time_til() <= 0:
+            usd_to_xfer = self._action_list[1].qty if last_qty_usd >= self._action_list[1].qty else last_qty_usd
+            fee_usd = usd_to_xfer * self.fee_rate
+            # Record this buy so cost basis may be calculated at the end.
+            self._cost_basis.buy((usd_to_xfer-fee_usd)/ask, ask)
+            #print(f"NEW Cost Basis: {self.get_cost_basis()}")
+            return self._action_list[1] # Buy
         else:
             return self._action_list[0] # Hold
 
