@@ -7,6 +7,7 @@ import cbpro
 import pandas as pd
 import datetime as dt
 import time
+import math
 
 SECONDS_PER_LOOP = 60*300 # 60 seconds per minute, 300 minutes per API call
 
@@ -156,7 +157,7 @@ class SimulatedEnvironment(Environment):
 
     def export_csv(self):
         for agent in self._agents:
-            agent._df.to_csv(f'export_{agent.__class__.__name__}-{agent.fee_rate}_data.csv', index=False)
+            agent._df.to_csv(f'export_data_{agent.__class__.__name__}-{agent.fee_rate}-{math.floor(time.time())}.csv', index=False)
 
     def step(self):
         # Get latest dataframe from observer.
