@@ -255,7 +255,8 @@ class RSI_MACD_Agent(Agent):
         WAIT_FOR_BUY_CONFIRMATION = 2
         #WAIT_FOR_EXIT = 3
 
-    def __init__(self, fee=0, cd_days=3, qty=100, length=14, fast=12, slow=26, signal=9, tp=0.1, re=0.1) -> None:
+    # NOTE: Length (rsi) is specified in DAYS, however, fast, slow, and signal (macd) is specified in PERIODS
+    def __init__(self, fee=0, cd_days=3, qty=100, length=14, fast=1920, slow=5040, signal=1200, tp=0.1, re=0.1) -> None:
         super().__init__(fee=fee)
         action_list = [
             Action_Hold(agent=self, cd=CD_NONE),
@@ -264,10 +265,10 @@ class RSI_MACD_Agent(Agent):
         ]
         self.set_action_list(action_list)
 
-        self._length = length*24*60     # Rsi period, converted from days to minutes
-        self._fast = fast*24*60         # MACD fast period, converted from days to minutes
-        self._slow = slow*24*60         # MACD slow period, converted from days to minutes
-        self._signal = signal*24*60     # MACD signal period, converted from days to minutes
+        self._length = length*24*60     # Rsi period, converted from days to minutes (periods)
+        self._fast = fast               # MACD fast period, assume already in minutes
+        self._slow = slow               # MACD slow period, assume already in minutes
+        self._signal = signal           # MACD signal period, assume already in minutes
 
         #self._tp = tp # Target percentage gain for exit
         #self._re = re # Target percentage drop for re-entry
@@ -320,7 +321,7 @@ class RSI_MACD_Agent(Agent):
 
     def update(self, df) -> None:
         super().update(df)
-        self._df["RSI"] = pta.rsi(self._df['bid'], length=self.length)
+        self._df["RSI"] = pta.rsi(self._df['bid'], length=10, drift=1440) # make diff(drift) between days, not minutes.
         self._df[["MACD", "MACD_HIST", "MACD_SIGNAL"]] = pta.macd(self._df['bid'], fast=self.fast, slow=self.slow, signal=self.signal)
 
     def get_action(self) -> Action:
@@ -332,7 +333,8 @@ class RSI_MACD_Agent(Agent):
         macd_hist_prev = self._df.iloc[-2]['MACD_HIST']
 
         buy_signal = rsi < 30
-        buy_confirm = True if buy_signal == True and (macd_hist_prev > 0 and macd_hist >= 0) else False
+        #buy_confirm = True if buy_signal == True and (macd_hist_prev < 0 and macd_hist >= 0) else False
+        buy_confirm = (macd_hist_prev < 0 and macd_hist >= 0)
         
         if buy_confirm == True and last_qty_usd > 0 and self._action_list[1].time_til() <= 0:
             usd_to_xfer = self._action_list[1].qty if last_qty_usd >= self._action_list[1].qty else last_qty_usd

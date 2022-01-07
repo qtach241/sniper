@@ -34,7 +34,7 @@ def sim(symbol):
 
     agents = [
         DCA_Benchmark_Agent(fee=CBPRO_FEE_RATE, cd_days=3, qty=1000),
-        RSI_MACD_Agent(fee=CBPRO_FEE_RATE, cd_days=1.5, qty=1000, length=10, fast=8, slow=21, signal=5)
+        RSI_MACD_Agent(fee=CBPRO_FEE_RATE, cd_days=0, qty=1000, length=10, fast=1920, slow=5040, signal=1200)
     ]
     
     env.load_agents(agents)
