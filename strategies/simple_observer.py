@@ -7,9 +7,9 @@ import json
 import cbpro
 import os
 
-API_SECRET = 'yIQzb6aYGoWK6e1fyql5OAhWoQZoJRjEUVLZ3VjHnf9hvtvC9+KosCDy6Z9W48XnVSfpsdQlKlgDVhuIJlpTyA=='
-API_KEY = '82105147c85ee283769f28bd0fd398dc'
-API_PASS = 'tmi2htht53b'
+API_SECRET = 'yIQz...'
+API_KEY = '8210...'
+API_PASS = 'tmi2...'
 
 DF_COLUMNS = ["unix", "bid", "ask", "qty_usd", "qty_crypto", "networth"]
 
