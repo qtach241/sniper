@@ -1,2 +1,2 @@
 # sniper
-Crypto Trading Bot
+Algorithmic Trading
